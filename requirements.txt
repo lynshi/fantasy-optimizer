@@ -1,0 +1,7 @@
+numpy==1.15.4
+pandas==0.23.4
+PuLP==1.6.9
+pyparsing==2.3.0
+python-dateutil==2.7.5
+pytz==2018.7
+six==1.12.0
