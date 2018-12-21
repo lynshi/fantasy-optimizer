@@ -36,7 +36,7 @@ class TestDfsOptimizer(unittest.TestCase):
             },
             'p5': {
                 PLAYER_NAME: 'player_4',
-                PLAYER_POINTS: 15,
+                PLAYER_POINTS: 5,
                 PLAYER_POSITION: 'position_2',
                 PLAYER_SALARY: 4
             },
@@ -70,6 +70,30 @@ class TestDfsOptimizer(unittest.TestCase):
                                                     self.positions_with_flex,
                                                     self.budget,
                                                     self.flex_positions)
+
+    def test_player_variable_construction(self):
+        for p in self.players:
+            self.assertTrue(p in self.dfs_optimizer.player_variables)
+            var = self.dfs_optimizer.player_variables[p]
+            self.assertEqual(p, var.name)
+            self.assertEqual(0, var.lowBound)
+            self.assertEqual(1, var.upBound)
+            self.assertTrue(var.isInteger())
+
+        for var_key in self.dfs_optimizer.player_variables.keys():
+            self.assertTrue(var_key in self.players)
+
+    def test_player_variable_with_flex_construction(self):
+        for p in self.players:
+            self.assertTrue(p in self.dfs_optimizer_with_flex.player_variables)
+            var = self.dfs_optimizer_with_flex.player_variables[p]
+            self.assertEqual(p, var.name)
+            self.assertEqual(0, var.lowBound)
+            self.assertEqual(1, var.upBound)
+            self.assertTrue(var.isInteger())
+
+        for var_key in self.dfs_optimizer_with_flex.player_variables.keys():
+            self.assertTrue(var_key in self.players)
 
     def test_position_requirement_constraint_construction(self):
         for position, requirement in self.positions.items():
@@ -187,8 +211,8 @@ class TestDfsOptimizer(unittest.TestCase):
 
     def test_budget_constraint_construction(self):
         self.assertTrue(
-            'budget' in self.dfs_optimizer.model.constraints)
-        constraint = self.dfs_optimizer.model.constraints['budget']
+            LINEUP_SALARY_STR in self.dfs_optimizer.model.constraints)
+        constraint = self.dfs_optimizer.model.constraints[LINEUP_SALARY_STR]
         self.assertEqual(pulp.LpConstraintLE, constraint.sense)
         self.assertEqual(-constraint.constant, self.budget)
 
@@ -204,8 +228,9 @@ class TestDfsOptimizer(unittest.TestCase):
 
     def test_budget_with_flex_constraint_construction(self):
         self.assertTrue(
-            'budget' in self.dfs_optimizer_with_flex.model.constraints)
-        constraint = self.dfs_optimizer_with_flex.model.constraints['budget']
+            LINEUP_SALARY_STR in self.dfs_optimizer_with_flex.model.constraints)
+        constraint = \
+            self.dfs_optimizer_with_flex.model.constraints[LINEUP_SALARY_STR]
         self.assertEqual(pulp.LpConstraintLE, constraint.sense)
         self.assertEqual(-constraint.constant, self.budget)
 
@@ -218,3 +243,30 @@ class TestDfsOptimizer(unittest.TestCase):
 
         for player, attributes in self.players.items():
             self.assertTrue(player in variables_in_constraint)
+
+    def test_optimize_result_format(self):
+        result = self.dfs_optimizer.optimize()
+        result_with_flex = self.dfs_optimizer_with_flex.optimize()
+        for key in [IP_STATUS_STR, LINEUP_SALARY_STR,
+                    LINEUP_PLAYERS_STR, LINEUP_POINTS_STR]:
+            self.assertTrue(key in result)
+            self.assertTrue(key in result_with_flex)
+
+    def test_optimize_result(self):
+        result = self.dfs_optimizer.optimize()
+        lineup = {'p1', 'p4'}
+        salary = 9
+        projection = 55
+        self.assertEqual(result[LINEUP_POINTS_STR], projection)
+        self.assertEqual(result[LINEUP_SALARY_STR], salary)
+        self.assertSetEqual(result[LINEUP_PLAYERS_STR], lineup)
+
+    def test_optimize_with_flex_result(self):
+        result = self.dfs_optimizer_with_flex.optimize()
+        lineup = {'p1', 'p5', 'p6'}
+        salary = 10
+        projection = 50
+        print(result)
+        self.assertEqual(result[LINEUP_POINTS_STR], projection)
+        self.assertEqual(result[LINEUP_SALARY_STR], salary)
+        self.assertSetEqual(result[LINEUP_PLAYERS_STR], lineup)
