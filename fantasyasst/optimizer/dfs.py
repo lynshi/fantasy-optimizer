@@ -32,12 +32,20 @@ class DfsOptimizer(ABC):
                                                      cat='Integer')
         self.position_constraints = {}
         for position, requirement in positions.items():
-            affine_expression = \
-                pulp.LpAffineExpression([(self.player_variables[player], 1)
-                                         for player, attributes in
-                                         players.items() if
-                                         attributes[PLAYER_POSITION] ==
-                                         position])
+            if position == FLEX_POSITION:
+                affine_expression = \
+                    pulp.LpAffineExpression([(self.player_variables[player], 1)
+                                             for player, attributes in
+                                             players.items() if
+                                             attributes[PLAYER_POSITION] in
+                                             flex_positions])
+            else:
+                affine_expression = \
+                    pulp.LpAffineExpression([(self.player_variables[player], 1)
+                                             for player, attributes in
+                                             players.items() if
+                                             attributes[PLAYER_POSITION] ==
+                                             position])
 
             self.position_constraints[position] = pulp.LpConstraint(
                 affine_expression, pulp.LpConstraintEQ, position, requirement)
