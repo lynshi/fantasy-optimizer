@@ -17,7 +17,7 @@ class DfsOptimizer(ABC):
         :type budget: int
         """
 
-        self.player_variables = pulp.LpVariable.dict('', players.keys(),
+        self.player_variables = pulp.LpVariable.dict('player', players.keys(),
                                                      lowBound=0, upBound=1,
                                                      cat='Integer')
 
