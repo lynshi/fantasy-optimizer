@@ -107,3 +107,6 @@ venv.bak/
 .idea
 
 data
+
+# for pulp files
+*.mps
