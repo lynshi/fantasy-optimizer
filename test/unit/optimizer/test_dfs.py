@@ -1,3 +1,4 @@
+import pulp
 import unittest
 from unittest.mock import patch
 
@@ -57,6 +58,18 @@ class TestDfsOptimizer(unittest.TestCase):
         self.dfs_optimizer = DfsOptimizer(self.players, self.positions,
                                           self.budget)
 
+        self.positions_with_flex = {
+            'position_1': 1,
+            'position_2': 1,
+            FLEX_POSITION: 1
+        }
+
+        self.dfs_optimizer_with_flex = DfsOptimizer(self.players,
+                                                    self.positions,
+                                                    self.budget,
+                                                    {'position_1',
+                                                     'position_2'})
+
     def test_variable_construction(self):
         for p in self.players:
             self.assertTrue(p in self.dfs_optimizer.player_variables)
@@ -64,4 +77,25 @@ class TestDfsOptimizer(unittest.TestCase):
             var = self.dfs_optimizer.player_variables[p]
             self.assertEqual(var.lowBound, 0)
             self.assertEqual(var.upBound, 1)
+            self.assertEqual(var.name, p)
             self.assertTrue(var.isInteger())
+
+    def test_position_limit_constraint_construction(self):
+        for position, requirement in self.positions.items():
+            self.assertTrue(position in self.dfs_optimizer.position_constraints)
+
+            constraint = self.dfs_optimizer.position_constraints[position]
+            self.assertEqual(pulp.LpConstraintEQ, constraint.sense)
+            self.assertEqual(-constraint.constant, requirement)
+
+            terms = constraint.items()
+            variables_in_constraint = set()
+            for tup in terms:
+                self.assertEqual(self.players[tup[0].name][PLAYER_POSITION],
+                                 position)
+                self.assertEqual(tup[1], 1)
+                variables_in_constraint.add(tup[0].name)
+
+            for player, attributes in self.players.items():
+                if attributes[PLAYER_POSITION] == position:
+                    self.assertTrue(player in variables_in_constraint)
