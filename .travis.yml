@@ -7,7 +7,6 @@ install:
   - pip3 install -r requirements.txt
 # command to run tests
 script:
-  - coverage run --source fantasyasst -m unittest discover --start-directory
-  test
+  - coverage run --source fantasyasst -m unittest discover --start-directory test
 after_success:
   - coveralls
