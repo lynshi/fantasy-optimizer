@@ -9,3 +9,6 @@ IP_STATUS_STR = 'ip_solve_status'
 LINEUP_SALARY_STR = 'lineup_cost'
 LINEUP_POINTS_STR = 'lineup_points'
 LINEUP_PLAYERS_STR = 'lineup_players'
+
+LB_SUFFIX = '_lb'
+UB_SUFFIX = '_ub'

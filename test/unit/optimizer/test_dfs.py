@@ -18,9 +18,9 @@ class TestDfsOptimizer(unittest.TestCase):
             },
             'p2': {
                 PLAYER_NAME: 'player_2',
-                PLAYER_POINTS: 1,
-                PLAYER_POSITION: 'position_1',
-                PLAYER_SALARY: 2
+                PLAYER_POINTS: 50,
+                PLAYER_POSITION: 'position_3',
+                PLAYER_SALARY: 1
             },
             'p3': {
                 PLAYER_NAME: 'player_3',
@@ -38,19 +38,26 @@ class TestDfsOptimizer(unittest.TestCase):
                 PLAYER_NAME: 'player_4',
                 PLAYER_POINTS: 5,
                 PLAYER_POSITION: 'position_2',
-                PLAYER_SALARY: 4
+                PLAYER_SALARY: 2
             },
             'p6': {
                 PLAYER_NAME: 'player_4',
                 PLAYER_POINTS: 20,
                 PLAYER_POSITION: 'position_2',
                 PLAYER_SALARY: 3
+            },
+            'p7': {
+                PLAYER_NAME: 'player_7',
+                PLAYER_POINTS: 45,
+                PLAYER_POSITION: 'position_3',
+                PLAYER_SALARY: 1
             }
         }
 
         self.positions = {
             'position_1': 1,
-            'position_2': 1
+            'position_2': 1,
+            'position_3': 1
         }
 
         self.budget = 10
@@ -61,8 +68,11 @@ class TestDfsOptimizer(unittest.TestCase):
         self.positions_with_flex = {
             'position_1': 1,
             'position_2': 1,
+            'position_3': 1,
             FLEX_POSITION: 1
         }
+
+        self.non_flex_total = 2
 
         self.flex_positions = {'position_1', 'position_2'}
 
@@ -72,27 +82,29 @@ class TestDfsOptimizer(unittest.TestCase):
                                                     self.flex_positions)
 
     def test_player_variable_construction(self):
+        variables = self.dfs_optimizer.model.variablesDict()
         for p in self.players:
-            self.assertTrue(p in self.dfs_optimizer.player_variables)
-            var = self.dfs_optimizer.player_variables[p]
+            self.assertTrue(p in variables)
+            var = variables[p]
             self.assertEqual(p, var.name)
             self.assertEqual(0, var.lowBound)
             self.assertEqual(1, var.upBound)
             self.assertTrue(var.isInteger())
 
-        for var_key in self.dfs_optimizer.player_variables.keys():
+        for var_key in variables.keys():
             self.assertTrue(var_key in self.players)
 
     def test_player_variable_with_flex_construction(self):
+        variables = self.dfs_optimizer_with_flex.model.variablesDict()
         for p in self.players:
-            self.assertTrue(p in self.dfs_optimizer_with_flex.player_variables)
-            var = self.dfs_optimizer_with_flex.player_variables[p]
+            self.assertTrue(p in variables)
+            var = variables[p]
             self.assertEqual(p, var.name)
             self.assertEqual(0, var.lowBound)
             self.assertEqual(1, var.upBound)
             self.assertTrue(var.isInteger())
 
-        for var_key in self.dfs_optimizer_with_flex.player_variables.keys():
+        for var_key in variables.keys():
             self.assertTrue(var_key in self.players)
 
     def test_position_requirement_constraint_construction(self):
@@ -114,34 +126,97 @@ class TestDfsOptimizer(unittest.TestCase):
 
     def test_position_requirement_with_flex_constraint_construction(self):
         for position, requirement in self.positions_with_flex.items():
-            self.assertTrue(
-                position in self.dfs_optimizer_with_flex.model.constraints)
+            if position != FLEX_POSITION and \
+                    position not in self.flex_positions:
+                self.assertTrue(
+                    position in self.dfs_optimizer_with_flex.model.constraints)
 
-            constraint = self.dfs_optimizer_with_flex.model.constraints[
-                position]
-            self.assertEqual(pulp.LpConstraintEQ, constraint.sense)
-            self.assertEqual(-constraint.constant, requirement)
+                constraint = self.dfs_optimizer_with_flex.model.constraints[
+                    position]
+                self.assertEqual(pulp.LpConstraintEQ, constraint.sense)
+                self.assertEqual(-constraint.constant, requirement)
 
-            terms = constraint.items()
-            variables_in_constraint = set()
-            for tup in terms:
-                self.assertTrue(tup[0].name in self.players)
-                if position == FLEX_POSITION:
-                    self.assertTrue(self.players[tup[0].name][PLAYER_POSITION]
-                                    in self.flex_positions)
-                else:
+                lb_terms = constraint.items()
+                variables_in_constraint = set()
+                for tup in lb_terms:
+                    self.assertTrue(tup[0].name in self.players)
                     self.assertEqual(
                         self.players[tup[0].name][PLAYER_POSITION],
                         position)
-                self.assertEqual(tup[1], 1)
-                variables_in_constraint.add(tup[0].name)
+                    self.assertEqual(tup[1], 1)
+                    variables_in_constraint.add(tup[0].name)
 
-            for player, attributes in self.players.items():
-                if position == FLEX_POSITION and \
-                        attributes[PLAYER_POSITION] in self.flex_positions:
-                    self.assertTrue(player in variables_in_constraint)
-                elif attributes[PLAYER_POSITION] == position:
-                    self.assertTrue(player in variables_in_constraint)
+                for player, attributes in self.players.items():
+                    if attributes[PLAYER_POSITION] == position:
+                        self.assertTrue(player in variables_in_constraint)
+            elif position == FLEX_POSITION:
+                self.assertTrue(
+                    position in self.dfs_optimizer_with_flex.model.constraints)
+
+                constraint = self.dfs_optimizer_with_flex.model.constraints[
+                    position]
+                self.assertEqual(pulp.LpConstraintEQ, constraint.sense)
+                self.assertEqual(-constraint.constant, requirement +
+                                 self.non_flex_total)
+
+                lb_terms = constraint.items()
+                variables_in_constraint = set()
+                for tup in lb_terms:
+                    self.assertTrue(tup[0].name in self.players)
+                    self.assertTrue(
+                        self.players[tup[0].name][PLAYER_POSITION] in
+                        self.flex_positions)
+                    self.assertEqual(tup[1], 1)
+                    variables_in_constraint.add(tup[0].name)
+
+                for player, attributes in self.players.items():
+                    if attributes[PLAYER_POSITION] in self.flex_positions:
+                        self.assertTrue(player in variables_in_constraint)
+            else:
+                self.assertTrue(
+                    position + LB_SUFFIX in
+                    self.dfs_optimizer_with_flex.model.constraints)
+                self.assertTrue(
+                    position + UB_SUFFIX in
+                    self.dfs_optimizer_with_flex.model.constraints)
+
+                lb_constraint = self.dfs_optimizer_with_flex.model.constraints[
+                    position + LB_SUFFIX]
+                ub_constraint = self.dfs_optimizer_with_flex.model.constraints[
+                    position + UB_SUFFIX]
+                self.assertEqual(pulp.LpConstraintGE, lb_constraint.sense)
+                self.assertEqual(pulp.LpConstraintLE, ub_constraint.sense)
+                self.assertEqual(-lb_constraint.constant, requirement)
+                self.assertEqual(-ub_constraint.constant, requirement +
+                                 self.positions_with_flex[FLEX_POSITION])
+
+                lb_terms = lb_constraint.items()
+                variables_in_constraint = set()
+                for tup in lb_terms:
+                    self.assertTrue(tup[0].name in self.players)
+                    self.assertTrue(
+                        self.players[tup[0].name][PLAYER_POSITION] in
+                        self.flex_positions)
+                    self.assertEqual(tup[1], 1)
+                    variables_in_constraint.add(tup[0].name)
+
+                for player, attributes in self.players.items():
+                    if attributes[PLAYER_POSITION] == position:
+                        self.assertTrue(player in variables_in_constraint)
+
+                ub_terms = lb_constraint.items()
+                variables_in_constraint = set()
+                for tup in ub_terms:
+                    self.assertTrue(tup[0].name in self.players)
+                    self.assertTrue(
+                        self.players[tup[0].name][PLAYER_POSITION] in
+                        self.flex_positions)
+                    self.assertEqual(tup[1], 1)
+                    variables_in_constraint.add(tup[0].name)
+
+                for player, attributes in self.players.items():
+                    if attributes[PLAYER_POSITION] == position:
+                        self.assertTrue(player in variables_in_constraint)
 
     @patch.multiple(DfsOptimizer, __abstractmethods__=set())
     def test_no_flex_positions_exception(self):
@@ -163,7 +238,7 @@ class TestDfsOptimizer(unittest.TestCase):
                           10)
         self.assertRaises(ValueError,
                           DfsOptimizer,
-                          {'p1': {PLAYER_SALARY: 'pos_1', PLAYER_POSITION: 1}},
+                          {'p1': {PLAYER_POSITION: 'pos_1', PLAYER_SALARY: 1}},
                           self.positions,
                           10)
 
@@ -181,7 +256,7 @@ class TestDfsOptimizer(unittest.TestCase):
                           10, self.flex_positions)
         self.assertRaises(ValueError,
                           DfsOptimizer,
-                          {'p1': {PLAYER_SALARY: 'pos_1', PLAYER_POSITION: 1}},
+                          {'p1': {PLAYER_POSITION: 'pos_1', PLAYER_SALARY: 1}},
                           self.positions_with_flex,
                           10, self.flex_positions)
 
@@ -254,19 +329,35 @@ class TestDfsOptimizer(unittest.TestCase):
 
     def test_optimize_result(self):
         result = self.dfs_optimizer.optimize()
-        lineup = {'p1', 'p4'}
-        salary = 9
-        projection = 55
+        lineup = {'p1', 'p2', 'p4'}
+        salary = 10
+        projection = 105
         self.assertEqual(result[LINEUP_POINTS_STR], projection)
         self.assertEqual(result[LINEUP_SALARY_STR], salary)
         self.assertSetEqual(result[LINEUP_PLAYERS_STR], lineup)
 
     def test_optimize_with_flex_result(self):
         result = self.dfs_optimizer_with_flex.optimize()
-        lineup = {'p1', 'p5', 'p6'}
-        salary = 10
-        projection = 50
-        print(result)
+        lineup = {'p1', 'p2', 'p5', 'p6'}
+        salary = 9
+        projection = 100
         self.assertEqual(result[LINEUP_POINTS_STR], projection)
         self.assertEqual(result[LINEUP_SALARY_STR], salary)
         self.assertSetEqual(result[LINEUP_PLAYERS_STR], lineup)
+
+    @patch.multiple(DfsOptimizer, __abstractmethods__=set())
+    def test_infeasible_result(self):
+        optimizer = DfsOptimizer({'p1': {PLAYER_POSITION: 'position_1',
+                                         PLAYER_SALARY: 1,
+                                         PLAYER_POINTS: 25}},
+                                 self.positions, 10)
+        result = optimizer.optimize()
+        self.assertEqual(result[IP_STATUS_STR], pulp.LpStatusInfeasible)
+
+        optimizer = DfsOptimizer({'p1': {PLAYER_POSITION: 'position_1',
+                                         PLAYER_SALARY: 1,
+                                         PLAYER_POINTS: 25}},
+                                 self.positions_with_flex, 10,
+                                 self.flex_positions)
+        result = optimizer.optimize()
+        self.assertEqual(result[IP_STATUS_STR], pulp.LpStatusInfeasible)
