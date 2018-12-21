@@ -31,7 +31,7 @@ class DfsOptimizer(ABC):
                              '\'FLEX_POSITION\' in \'positions\'')
 
         for player, attributes in players.items():
-            for attr in [PLAYER_POSITION, PLAYER_POINTS, PLAYER_SALARY]:
+            for attr in [PLAYER_POSITION, PLAYER_POINTS_PROJECTION, PLAYER_SALARY]:
                 if attr not in attributes.keys():
                     raise ValueError('player \'' + player + '\' is missing '
                                                             'required '
@@ -112,7 +112,7 @@ class DfsOptimizer(ABC):
 
         self.model = pulp.LpProblem('DFS Optimizer', pulp.LpMaximize)
         self.model += sum([
-            attributes[PLAYER_POINTS] * player_variables[player]
+            attributes[PLAYER_POINTS_PROJECTION] * player_variables[player]
             for player, attributes in players.items()
         ])
 
@@ -150,11 +150,12 @@ class DfsOptimizer(ABC):
 
     @classmethod
     @abstractmethod
-    def load_dfs_instance_from_csv(cls):
+    def load_instance_from_csv(cls, file_name, positions=None, budget=None,
+                               flex_positions=None):
         pass
 
     @staticmethod
-    def import_csv(file_name, index_column, data_type,
+    def import_csv(file_name, index_column, data_type, column_renames,
                    row_ignore_conditions,
                    functions_to_apply) -> dict:
         """
@@ -164,6 +165,7 @@ class DfsOptimizer(ABC):
         :param index_column: column to use as 'index_col' when loading csv as
             pandas DataFrame
         :param data_type: type requirements for columns
+        :param column_renames: dict of name -> new_name for renaming columns
         :param row_ignore_conditions: list of tuples (column, value)
             specifying that rows with value in column should be dropped
         :param functions_to_apply: list of tuples (column, function) specifying
@@ -191,8 +193,15 @@ class DfsOptimizer(ABC):
                 df[col] = df.apply(func, axis=1)
         df.dropna(inplace=True)
 
+        if column_renames is not None:
+            df.rename(index=str, columns=column_renames, inplace=True)
+
         return df.to_dict('index')
 
     @abstractmethod
     def generate_lineup(self):
+        pass
+
+    @abstractmethod
+    def print_lineup(self):
         pass

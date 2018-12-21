@@ -13,43 +13,43 @@ class TestDfsOptimizer(unittest.TestCase):
         self.players = {
             'p1': {
                 PLAYER_NAME: 'player_1',
-                PLAYER_POINTS: 25,
+                PLAYER_POINTS_PROJECTION: 25,
                 PLAYER_POSITION: 'position_1',
                 PLAYER_SALARY: 3
             },
             'p2': {
                 PLAYER_NAME: 'player_2',
-                PLAYER_POINTS: 50,
+                PLAYER_POINTS_PROJECTION: 50,
                 PLAYER_POSITION: 'position_3',
                 PLAYER_SALARY: 1
             },
             'p3': {
                 PLAYER_NAME: 'player_3',
-                PLAYER_POINTS: 100,
+                PLAYER_POINTS_PROJECTION: 100,
                 PLAYER_POSITION: 'position_1',
                 PLAYER_SALARY: 10
             },
             'p4': {
                 PLAYER_NAME: 'player_4',
-                PLAYER_POINTS: 30,
+                PLAYER_POINTS_PROJECTION: 30,
                 PLAYER_POSITION: 'position_2',
                 PLAYER_SALARY: 6
             },
             'p5': {
                 PLAYER_NAME: 'player_4',
-                PLAYER_POINTS: 5,
+                PLAYER_POINTS_PROJECTION: 5,
                 PLAYER_POSITION: 'position_2',
                 PLAYER_SALARY: 2
             },
             'p6': {
                 PLAYER_NAME: 'player_4',
-                PLAYER_POINTS: 20,
+                PLAYER_POINTS_PROJECTION: 20,
                 PLAYER_POSITION: 'position_2',
                 PLAYER_SALARY: 3
             },
             'p7': {
                 PLAYER_NAME: 'player_7',
-                PLAYER_POINTS: 45,
+                PLAYER_POINTS_PROJECTION: 45,
                 PLAYER_POSITION: 'position_3',
                 PLAYER_SALARY: 1
             }
@@ -229,12 +229,12 @@ class TestDfsOptimizer(unittest.TestCase):
     def test_player_missing_attributes(self):
         self.assertRaises(ValueError,
                           DfsOptimizer,
-                          {'p1': {PLAYER_SALARY: 1, PLAYER_POINTS: 1}},
+                          {'p1': {PLAYER_SALARY: 1, PLAYER_POINTS_PROJECTION: 1}},
                           self.positions,
                           10)
         self.assertRaises(ValueError,
                           DfsOptimizer,
-                          {'p1': {PLAYER_POSITION: 'pos_1', PLAYER_POINTS: 1}},
+                          {'p1': {PLAYER_POSITION: 'pos_1', PLAYER_POINTS_PROJECTION: 1}},
                           self.positions,
                           10)
         self.assertRaises(ValueError,
@@ -247,12 +247,12 @@ class TestDfsOptimizer(unittest.TestCase):
     def test_player_missing_attributes_with_flex(self):
         self.assertRaises(ValueError,
                           DfsOptimizer,
-                          {'p1': {PLAYER_SALARY: 1, PLAYER_POINTS: 1}},
+                          {'p1': {PLAYER_SALARY: 1, PLAYER_POINTS_PROJECTION: 1}},
                           self.positions_with_flex,
                           10, self.flex_positions)
         self.assertRaises(ValueError,
                           DfsOptimizer,
-                          {'p1': {PLAYER_POSITION: 'pos_1', PLAYER_POINTS: 1}},
+                          {'p1': {PLAYER_POSITION: 'pos_1', PLAYER_POINTS_PROJECTION: 1}},
                           self.positions_with_flex,
                           10, self.flex_positions)
         self.assertRaises(ValueError,
@@ -267,7 +267,7 @@ class TestDfsOptimizer(unittest.TestCase):
         variables_in_objective = set()
         for tup in terms:
             self.assertTrue(tup[0].name in self.players)
-            self.assertEqual(tup[1], self.players[tup[0].name][PLAYER_POINTS])
+            self.assertEqual(tup[1], self.players[tup[0].name][PLAYER_POINTS_PROJECTION])
             variables_in_objective.add(tup[0].name)
 
         for player, attributes in self.players.items():
@@ -279,7 +279,7 @@ class TestDfsOptimizer(unittest.TestCase):
         variables_in_objective = set()
         for tup in terms:
             self.assertTrue(tup[0].name in self.players)
-            self.assertEqual(tup[1], self.players[tup[0].name][PLAYER_POINTS])
+            self.assertEqual(tup[1], self.players[tup[0].name][PLAYER_POINTS_PROJECTION])
             variables_in_objective.add(tup[0].name)
 
         for player, attributes in self.players.items():
@@ -350,14 +350,14 @@ class TestDfsOptimizer(unittest.TestCase):
     def test_infeasible_result(self):
         optimizer = DfsOptimizer({'p1': {PLAYER_POSITION: 'position_1',
                                          PLAYER_SALARY: 1,
-                                         PLAYER_POINTS: 25}},
+                                         PLAYER_POINTS_PROJECTION: 25}},
                                  self.positions, 10)
         result = optimizer.optimize()
         self.assertEqual(result[IP_STATUS_STR], pulp.LpStatusInfeasible)
 
         optimizer = DfsOptimizer({'p1': {PLAYER_POSITION: 'position_1',
                                          PLAYER_SALARY: 1,
-                                         PLAYER_POINTS: 25}},
+                                         PLAYER_POINTS_PROJECTION: 25}},
                                  self.positions_with_flex, 10,
                                  self.flex_positions)
         result = optimizer.optimize()
@@ -392,12 +392,18 @@ class TestDfsOptimizer(unittest.TestCase):
                 apply_functions = [(PLAYER_NAME, make_name),
                                    (PLAYER_NAME[::-1], make_name_backwards)]
 
+                column_renames = {
+                    'Position': PLAYER_POSITION,
+                    'FPPG': PLAYER_POINTS_PROJECTION,
+                    'Salary': PLAYER_SALARY
+                }
+
                 result = DfsOptimizer.import_csv('test.csv',
                                                  'Id',
                                                  {
                                                      'FPPG': np.float,
                                                      'Salary': np.int
-                                                 },
+                                                 }, column_renames,
                                                  ignore_conditions,
                                                  apply_functions)
 
@@ -405,13 +411,13 @@ class TestDfsOptimizer(unittest.TestCase):
             "nfl.p.27540": {
                 "First Name": "Odell",
                 "Last Name": "Beckham Jr.",
-                "Position": "WR",
+                PLAYER_POSITION: "WR",
                 "Team": "NYG",
                 "Opponent": "IND",
                 "Game": "NYG@IND",
                 "Time": "1:00PM EST",
-                "Salary": 26,
-                "FPPG": 16.0,
+                PLAYER_SALARY: 26,
+                PLAYER_POINTS_PROJECTION: 16.0,
                 "Injury Status": "Q",
                 "Starting": "No",
                 "player_name": "Odell Beckham Jr.",
@@ -420,13 +426,13 @@ class TestDfsOptimizer(unittest.TestCase):
             "nfl.p.30972": {
                 "First Name": "Saquon",
                 "Last Name": "Barkley",
-                "Position": "RB",
+                PLAYER_POSITION: "RB",
                 "Team": "NYG",
                 "Opponent": "IND",
                 "Game": "NYG@IND",
                 "Time": "1:00PM EST",
-                "Salary": 36,
-                "FPPG": 21.6,
+                PLAYER_SALARY: 36,
+                PLAYER_POINTS_PROJECTION: 21.6,
                 "Injury Status": " ",
                 "Starting": "No",
                 "player_name": "Saquon Barkley",
@@ -435,13 +441,13 @@ class TestDfsOptimizer(unittest.TestCase):
             "nfl.p.6760": {
                 "First Name": "Eli",
                 "Last Name": "Manning",
-                "Position": "QB",
+                PLAYER_POSITION: "QB",
                 "Team": "NYG",
                 "Opponent": "IND",
                 "Game": "NYG@IND",
                 "Time": "1:00PM EST",
-                "Salary": 25,
-                "FPPG": 15.0,
+                PLAYER_SALARY: 25,
+                PLAYER_POINTS_PROJECTION: 15.0,
                 "Injury Status": " ",
                 "Starting": "No",
                 "player_name": "Eli Manning",
@@ -469,7 +475,7 @@ class TestDfsOptimizer(unittest.TestCase):
                 self.assertRaises(ValueError,
                                   DfsOptimizer.import_csv, 'testcsv', 'Id',
                                   {'FPPG': np.float, 'Salary': np.int}, None,
-                                  None)
+                                  None, None)
 
     def import_csv_from_nonexistent_file(self):
         with patch('os.path.isfile') as mock_isfile:
@@ -490,4 +496,4 @@ class TestDfsOptimizer(unittest.TestCase):
                 self.assertRaises(RuntimeError,
                                   DfsOptimizer.import_csv, 'test.csv', 'Id',
                                   {'FPPG': np.float, 'Salary': np.int}, None,
-                                  None)
+                                  None, None)
