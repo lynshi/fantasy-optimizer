@@ -62,5 +62,10 @@ class PlayerLoader(ABC):
 
         return df
 
-    def get_player_dict(self):
+    def get_player_dict(self) -> dict:
+        """
+        Get dictionary of players in DataFrame self.df, where the indices are
+        keys and the values are dictionaries of column name -> value
+        :return: dict of players
+        """
         return self.df.to_dict('index')

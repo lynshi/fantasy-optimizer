@@ -235,17 +235,14 @@ class DfsOptimizer:
         :return: dict that is the lineup, organized by position
         """
         result = self.optimize()
-        lineup = {
-            'QB': [],
-            'RB': [],
-            'WR': [],
-            'TE': [],
-            'DEF': [],
-        }
+        lineup = {}
 
         for p in result[DfsOptimizer.LINEUP_PLAYERS]:
             player = self.players[p]
             pos = player[Player.POSITION]
+
+            if pos not in lineup:
+                lineup[pos] = []
 
             # to remove extra information that may be contained in player
             lineup[pos].append({

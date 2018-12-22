@@ -1,3 +1,4 @@
+from copy import deepcopy
 import pulp
 import unittest
 
@@ -389,6 +390,32 @@ class TestDfsOptimizer(unittest.TestCase):
                                          Player.POINTS_PROJECTION: 25}},
                                  self.positions, 10)
         self.assertRaises(OptimizerException, optimizer.optimize)
+
+    def test_generate_lineup(self):
+        for key in [Player.OPPONENT, Player.GAME_TIME, Player.INJURY_STATUS,
+                    Player.TEAM]:
+            for i, p in enumerate(self.players.keys()):
+                self.players[p][key] = key * i
+
+        players = deepcopy(self.players)
+        for p in players:
+            del players[p][Player.POSITION]
+
+        for name, optimizer in self.optimizers.items():
+            result = optimizer.optimize()
+            lineup = optimizer.generate_lineup(display_lineup=False)
+            correct = {}
+
+            # assume result is correct thanks to other tests
+            for player_id in result[DfsOptimizer.LINEUP_PLAYERS]:
+                pos = self.players[player_id][Player.POSITION]
+                if pos not in correct:
+                    correct[pos] = []
+                correct[pos].append(players[player_id])
+
+            self.assertSetEqual(set(correct.keys()), set(lineup.keys()))
+            for pos in correct:
+                self.assertCountEqual(correct[pos], lineup[pos])
 
 
 if __name__ == '__main__':
