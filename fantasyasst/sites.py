@@ -1,3 +1,6 @@
+from fantasyasst.player import Player
+
+
 class Site:
     YAHOO = 'Yahoo'
 
@@ -14,10 +17,11 @@ class Yahoo:
     NFL_BUDGET = 200
     NFL_FLEX_POSITIONS = {'FLEX': ({'RB', 'WR', 'TE'}, 1)}
     NFL_PLAYER_IGNORE_CONDITIONS = [
-        ('Injury Status', 'O'),
-        ('Injury Status', 'IR'),
-        ('Injury Status', 'D')
+        (Player.INJURY_STATUS, 'O'),
+        (Player.INJURY_STATUS, 'IR'),
+        (Player.INJURY_STATUS, 'D')
     ]
+    NFL_UTILITY_POSITIONS = 0
 
     """ NBA """
     NBA_POSITIONS = {
@@ -33,8 +37,8 @@ class Yahoo:
         'F': ({'SF', 'PF'}, 1)
     }
     NBA_PLAYER_IGNORE_CONDITIONS = [
-        ('Injury Status', 'O'),
-        ('Injury Status', 'INJ'),
-        ('Injury Status', 'OFS')
+        (Player.INJURY_STATUS, 'O'),
+        (Player.INJURY_STATUS, 'INJ'),
+        (Player.INJURY_STATUS, 'OFS')
     ]
     NBA_UTILITY_POSITIONS = 1

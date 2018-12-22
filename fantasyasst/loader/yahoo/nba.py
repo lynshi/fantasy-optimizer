@@ -37,7 +37,11 @@ class NbaLoader(PlayerLoader):
         column_renames = {
             'Position': Player.POSITION,
             'FPPG': Player.POINTS_PROJECTION,
-            'Salary': Player.SALARY
+            'Salary': Player.SALARY,
+            'Injury Status': Player.INJURY_STATUS,
+            'Time': Player.GAME_TIME,
+            'Opponent': Player.OPPONENT,
+            'Team': Player.TEAM
         }
 
         def make_name(row):

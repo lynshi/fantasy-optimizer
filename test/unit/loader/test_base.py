@@ -24,9 +24,9 @@ class TestPlayerLoader(unittest.TestCase):
                                            'nfl.p.6760,Eli,Manning,QB,NYG,IND,'
                                            'NYG@IND,1:00PM EST,25,15.0,'
                                            '\" \",No')):
-                ignore_conditions = [('Injury Status', 'O'),
-                                     ('Injury Status', 'IR'),
-                                     ('Injury Status', 'D')]
+                ignore_conditions = [(Player.INJURY_STATUS, 'O'),
+                                     (Player.INJURY_STATUS, 'IR'),
+                                     (Player.INJURY_STATUS, 'D')]
 
                 def make_name(row):
                     return row['First Name'] + ' ' + row['Last Name']
@@ -40,7 +40,8 @@ class TestPlayerLoader(unittest.TestCase):
                 column_renames = {
                     'Position': Player.POSITION,
                     'FPPG': Player.POINTS_PROJECTION,
-                    'Salary': Player.SALARY
+                    'Salary': Player.SALARY,
+                    'Injury Status': Player.INJURY_STATUS
                 }
 
                 player_loader = PlayerLoader(
@@ -65,7 +66,7 @@ class TestPlayerLoader(unittest.TestCase):
                 "Time": "1:00PM EST",
                 Player.SALARY: 26,
                 Player.POINTS_PROJECTION: 16.0,
-                "Injury Status": "Q",
+                Player.INJURY_STATUS: "Q",
                 "Starting": "No",
                 Player.NAME: "Odell Beckham Jr.",
                 Player.NAME[::-1]: "Beckham Jr. Odell"
@@ -80,7 +81,7 @@ class TestPlayerLoader(unittest.TestCase):
                 "Time": "1:00PM EST",
                 Player.SALARY: 36,
                 Player.POINTS_PROJECTION: 21.6,
-                "Injury Status": " ",
+                Player.INJURY_STATUS: " ",
                 "Starting": "No",
                 Player.NAME: "Saquon Barkley",
                 Player.NAME[::-1]: "Barkley Saquon"
@@ -95,7 +96,7 @@ class TestPlayerLoader(unittest.TestCase):
                 "Time": "1:00PM EST",
                 Player.SALARY: 25,
                 Player.POINTS_PROJECTION: 15.0,
-                "Injury Status": " ",
+                Player.INJURY_STATUS: " ",
                 "Starting": "No",
                 Player.NAME: "Eli Manning",
                 Player.NAME[::-1]: "Manning Eli"

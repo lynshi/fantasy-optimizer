@@ -48,6 +48,9 @@ class PlayerLoader(ABC):
         with open(file_name) as infile:
             df = pd.read_csv(infile, index_col=index_column, dtype=data_type)
 
+        if column_renames is not None:
+            df.rename(index=str, columns=column_renames, inplace=True)
+
         if row_ignore_conditions is not None:
             for col, val in row_ignore_conditions:
                 df = df[df[col] != val]
@@ -56,9 +59,6 @@ class PlayerLoader(ABC):
             for col, func in functions_to_apply:
                 df[col] = df.apply(func, axis=1)
         df.dropna(inplace=True)
-
-        if column_renames is not None:
-            df.rename(index=str, columns=column_renames, inplace=True)
 
         return df
 

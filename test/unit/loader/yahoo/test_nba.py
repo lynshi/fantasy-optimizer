@@ -2,9 +2,10 @@ import unittest
 from unittest.mock import mock_open, patch
 
 from fantasyasst.loader.yahoo.nba import NbaLoader
+from fantasyasst.player import Player
 
 
-class TestNflLoader(unittest.TestCase):
+class TestNbaLoader(unittest.TestCase):
     def test_import_and_df_to_dict_default(self):
         with patch('os.path.isfile') as mock_isfile:
             mock_isfile.return_value = True
@@ -29,30 +30,30 @@ class TestNflLoader(unittest.TestCase):
             "nba.p.3860": {
                 "First Name": "Trevor",
                 "Last Name": "Ariza",
-                "Position": "SF",
-                "Team": "WAS",
-                "Opponent": "PHO",
+                Player.POSITION: "SF",
+                Player.TEAM: "WAS",
+                Player.OPPONENT: "PHO",
                 "Game": "PHO@WAS",
-                "Time": "7:00PM EST",
-                "Salary": 24,
-                "Points_Projection": 26.7,
-                "Injury Status": "GTD",
+                Player.GAME_TIME: "7:00PM EST",
+                Player.SALARY: 24,
+                Player.POINTS_PROJECTION: 26.7,
+                Player.INJURY_STATUS: "GTD",
                 "Starting": "No",
-                "Name": "Trevor Ariza"
+                Player.NAME: "Trevor Ariza"
             },
             "nba.p.4483": {
                 "First Name": "Ryan",
                 "Last Name": "Anderson",
-                "Position": "PF",
-                "Team": "PHO",
-                "Opponent": "WAS",
+                Player.POSITION: "PF",
+                Player.TEAM: "PHO",
+                Player.OPPONENT: "WAS",
                 "Game": "PHO@WAS",
-                "Time": "7:00PM EST",
-                "Salary": 10,
-                "Points_Projection": 9.0,
-                "Injury Status": " ",
+                Player.GAME_TIME: "7:00PM EST",
+                Player.SALARY: 10,
+                Player.POINTS_PROJECTION: 9.0,
+                Player.INJURY_STATUS: " ",
                 "Starting": "No",
-                "Name": "Ryan Anderson"
+                Player.NAME: "Ryan Anderson"
             }
         }
         self.assertDictEqual(correct, player_loader.get_player_dict())
@@ -75,10 +76,10 @@ class TestNflLoader(unittest.TestCase):
                                            '\" \",No'
                                  )):
                 ignore_conditions = [
-                    ('Injury Status', 'O'),
-                    ('Injury Status', 'INJ'),
-                    ('Injury Status', 'OFS'),
-                    ('Injury Status', 'GTD')
+                    (Player.INJURY_STATUS, 'O'),
+                    (Player.INJURY_STATUS, 'INJ'),
+                    (Player.INJURY_STATUS, 'OFS'),
+                    (Player.INJURY_STATUS, 'GTD')
                 ]
 
                 player_loader = NbaLoader.load_players('test.csv',
@@ -88,16 +89,16 @@ class TestNflLoader(unittest.TestCase):
             "nba.p.4483": {
                 "First Name": "Ryan",
                 "Last Name": "Anderson",
-                "Position": "PF",
-                "Team": "PHO",
-                "Opponent": "WAS",
+                Player.POSITION: "PF",
+                Player.TEAM: "PHO",
+                Player.OPPONENT: "WAS",
                 "Game": "PHO@WAS",
-                "Time": "7:00PM EST",
-                "Salary": 10,
-                "Points_Projection": 9.0,
-                "Injury Status": " ",
+                Player.GAME_TIME: "7:00PM EST",
+                Player.SALARY: 10,
+                Player.POINTS_PROJECTION: 9.0,
+                Player.INJURY_STATUS: " ",
                 "Starting": "No",
-                "Name": "Ryan Anderson"
+                Player.NAME: "Ryan Anderson"
             }
         }
         self.assertDictEqual(correct, player_loader.get_player_dict())

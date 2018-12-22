@@ -1,23 +1,35 @@
 import sys
 
-from fantasyasst.constants import *
-import fantasyasst.optimizer.yahoo as yh
+from fantasyasst import *
+import fantasyasst.loader.yahoo as yh
+from fantasyasst.optimizer.dfs import DfsOptimizer
 
 
 def optimize_lineup(site, csv_location):
-    optimizers = {
-        'Yahoo': yh.nfl.NflDfsOptimizer
+    if site not in SITE_DEFAULTS:
+        raise ValueError('Unsupported site ' + site)
+    ignore_conditions = {(Player.INJURY_STATUS, 'Q')}
+    ignore_conditions.update(
+        SITE_DEFAULTS[site].NFL_PLAYER_IGNORE_CONDITIONS)
+
+    optimizer = DfsOptimizer(load_players(site, csv_location,
+                                          ignore_conditions).get_player_dict(),
+                             SITE_DEFAULTS[site].NFL_POSITIONS,
+                             SITE_DEFAULTS[site].NFL_BUDGET,
+                             SITE_DEFAULTS[site].NFL_FLEX_POSITIONS,
+                             SITE_DEFAULTS[site].NFL_UTILITY_POSITIONS)
+    optimizer.generate_lineup()
+
+
+def load_players(site, csv_location, ignore_conditions):
+    loaders = {
+        Site.YAHOO: yh.nfl.NflLoader
     }
 
-    if site not in optimizers:
-        raise ValueError('Unsupported site ' + site)
+    if site not in loaders:
+        raise ValueError('Unsupported site for loading: ' + site)
 
-    ignore_conditions = {(INJURY_STATUS_STR, 'Q')}
-    ignore_conditions.update(
-        yh.nfl.NflDfsOptimizer.default_player_ignore_conditions())
-    optimizer = optimizers[site].load_instance_from_csv(
-        csv_location, ignore_conditions=ignore_conditions)
-    optimizer.generate_lineup()
+    return loaders[site].load_players(csv_location, ignore_conditions)
 
 
 if __name__ == '__main__':
