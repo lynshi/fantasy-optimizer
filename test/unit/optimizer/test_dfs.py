@@ -5,84 +5,97 @@ from unittest.mock import mock_open, patch
 
 from fantasyasst.optimizer.dfs import DfsOptimizer
 from fantasyasst.optimizer.exceptions import OptimizerException
+from fantasyasst.player import Player
 
 
 class TestDfsOptimizer(unittest.TestCase):
-    @patch.multiple(DfsOptimizer, __abstractmethods__=set())
     def setUp(self):
         self.players = {
             'p1': {
-                PLAYER_NAME: 'player_1',
-                PLAYER_POINTS_PROJECTION: 25,
-                PLAYER_POSITION: 'position_1',
-                PLAYER_SALARY: 3
+                Player.NAME: 'player_1',
+                Player.POINTS_PROJECTION: 25,
+                Player.POSITION: 'position_1',
+                Player.SALARY: 3
             },
             'p2': {
-                PLAYER_NAME: 'player_2',
-                PLAYER_POINTS_PROJECTION: 50,
-                PLAYER_POSITION: 'position_3',
-                PLAYER_SALARY: 1
+                Player.NAME: 'player_2',
+                Player.POINTS_PROJECTION: 30,
+                Player.POSITION: 'position_1',
+                Player.SALARY: 15
             },
             'p3': {
-                PLAYER_NAME: 'player_3',
-                PLAYER_POINTS_PROJECTION: 100,
-                PLAYER_POSITION: 'position_1',
-                PLAYER_SALARY: 10
+                Player.NAME: 'player_3',
+                Player.POINTS_PROJECTION: 4,
+                Player.POSITION: 'position_2',
+                Player.SALARY: 5
             },
             'p4': {
-                PLAYER_NAME: 'player_4',
-                PLAYER_POINTS_PROJECTION: 30,
-                PLAYER_POSITION: 'position_2',
-                PLAYER_SALARY: 6
+                Player.NAME: 'player_4',
+                Player.POINTS_PROJECTION: 2,
+                Player.POSITION: 'position_2',
+                Player.SALARY: 2
             },
             'p5': {
-                PLAYER_NAME: 'player_4',
-                PLAYER_POINTS_PROJECTION: 5,
-                PLAYER_POSITION: 'position_2',
-                PLAYER_SALARY: 2
+                Player.NAME: 'player_5',
+                Player.POINTS_PROJECTION: 30,
+                Player.POSITION: 'position_3',
+                Player.SALARY: 9
             },
             'p6': {
-                PLAYER_NAME: 'player_4',
-                PLAYER_POINTS_PROJECTION: 20,
-                PLAYER_POSITION: 'position_2',
-                PLAYER_SALARY: 3
+                Player.NAME: 'player_6',
+                Player.POINTS_PROJECTION: 1,
+                Player.POSITION: 'position_3',
+                Player.SALARY: 8
             },
             'p7': {
-                PLAYER_NAME: 'player_7',
-                PLAYER_POINTS_PROJECTION: 45,
-                PLAYER_POSITION: 'position_3',
-                PLAYER_SALARY: 1
+                Player.NAME: 'player_1',
+                Player.POINTS_PROJECTION: 25,
+                Player.POSITION: 'position_4',
+                Player.SALARY: 1
+            },
+            'p8': {
+                Player.NAME: 'player_8',
+                Player.POINTS_PROJECTION: 25,
+                Player.POSITION: 'position_4',
+                Player.SALARY: 2
             }
         }
 
         self.positions = {
             'position_1': 1,
             'position_2': 1,
-            'position_3': 1
-        }
-
-        self.budget = 10
-
-        self.dfs_optimizer = DfsOptimizer(self.players, self.positions,
-                                          self.budget)
-
-        self.positions_with_flex = {
-            'position_1': 1,
-            'position_2': 1,
             'position_3': 1,
-            FLEX_POSITION: 1
+            'position_4': 1
         }
 
-        self.non_flex_total = 2
+        self.budget = 30
 
-        self.flex_positions = {'position_1', 'position_2'}
+        self.flex_positions = {
+            '1_2': ({'position_1', 'position_2'}, 1),
+            '3_4': ({'position_3', 'position_4'}, 1),
+        }
 
-        self.dfs_optimizer_with_flex = DfsOptimizer(self.players,
-                                                    self.positions_with_flex,
-                                                    self.budget,
-                                                    self.flex_positions)
+        self.utility_requirement = 1
+
+    def test_player_dict_copy(self):
+        optimizer = DfsOptimizer(self.players, self.positions, self.budget)
+        self.assertDictEqual(self.players, optimizer.players)
+
+        optimizer = DfsOptimizer(self.players, self.positions, self.budget,
+                                 flex_positions=self.flex_positions)
+        self.assertDictEqual(self.players, optimizer.players)
+
+        optimizer = DfsOptimizer(self.players, self.positions, self.budget,
+                                 utility_requirement=self.utility_requirement)
+        self.assertDictEqual(self.players, optimizer.players)
+
+        optimizer = DfsOptimizer(self.players, self.positions, self.budget,
+                                 flex_positions=self.flex_positions,
+                                 utility_requirement=self.utility_requirement)
+        self.assertDictEqual(self.players, optimizer.players)
 
     def test_player_variable_construction(self):
+        optimizer = DfsOptimizer(self.players, self.positions, self.budget)
         variables = self.dfs_optimizer.model.variablesDict()
         for p in self.players:
             self.assertTrue(p in variables)
