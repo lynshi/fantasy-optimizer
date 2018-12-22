@@ -3,7 +3,6 @@ import pulp
 import unittest
 from unittest.mock import mock_open, patch
 
-from fantasyasst.constants import *
 from fantasyasst.optimizer.dfs import DfsOptimizer
 from fantasyasst.optimizer.exceptions import OptimizerException
 

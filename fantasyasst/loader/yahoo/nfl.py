@@ -1,12 +1,7 @@
-import json
-import numpy as np
-import os
-
-from fantasyasst.constants import *
-from fantasyasst.optimizer.dfs import DfsOptimizer
+from fantasyasst.loader.base import PlayerLoader
 
 
-class NflDfsOptimizer(DfsOptimizer):
+class NflLoader(PlayerLoader):
     _DEFAULT_POSITIONS = {
                 'QB': 1,
                 'RB': 2,
