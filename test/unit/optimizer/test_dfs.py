@@ -382,40 +382,14 @@ class TestDfsOptimizer(unittest.TestCase):
         }
 
         self.assertDictEqual(correct, result)
-    #
-    # def test_optimize_result(self):
-    #     result = self.dfs_optimizer.optimize()
-    #     lineup = {'p1', 'p2', 'p4'}
-    #     salary = 10
-    #     projection = 105
-    #     self.assertEqual(result[LINEUP_POINTS_STR], projection)
-    #     self.assertEqual(result[LINEUP_SALARY_STR], salary)
-    #     self.assertSetEqual(result[LINEUP_PLAYERS_STR], lineup)
-    #
-    # def test_optimize_with_flex_result(self):
-    #     result = self.dfs_optimizer_with_flex.optimize()
-    #     lineup = {'p1', 'p2', 'p5', 'p6'}
-    #     salary = 9
-    #     projection = 100
-    #     self.assertEqual(result[LINEUP_POINTS_STR], projection)
-    #     self.assertEqual(result[LINEUP_SALARY_STR], salary)
-    #     self.assertSetEqual(result[LINEUP_PLAYERS_STR], lineup)
-    #
-    # @patch.multiple(DfsOptimizer, __abstractmethods__=set())
-    # def test_infeasible_result(self):
-    #     optimizer = DfsOptimizer({'p1': {PLAYER_POSITION: 'position_1',
-    #                                      PLAYER_SALARY: 1,
-    #                                      PLAYER_POINTS_PROJECTION: 25}},
-    #                              self.positions, 10)
-    #     self.assertRaises(OptimizerException, optimizer.optimize)
-    #
-    #     optimizer = DfsOptimizer({'p1': {PLAYER_POSITION: 'position_1',
-    #                                      PLAYER_SALARY: 1,
-    #                                      PLAYER_POINTS_PROJECTION: 25}},
-    #                              self.positions_with_flex, 10,
-    #                              self.flex_positions)
-    #     self.assertRaises(OptimizerException, optimizer.optimize)
-    #
+
+    def test_infeasible_result(self):
+        optimizer = DfsOptimizer({'p1': {Player.POSITION: 'position_1',
+                                         Player.SALARY: 1,
+                                         Player.POINTS_PROJECTION: 25}},
+                                 self.positions, 10)
+        self.assertRaises(OptimizerException, optimizer.optimize)
+
     # def test_import_csv(self):
     #     with patch('os.path.isfile') as mock_isfile:
     #         mock_isfile.return_value = True
