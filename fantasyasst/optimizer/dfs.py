@@ -1,6 +1,4 @@
 import json
-import os
-import pandas as pd
 import pulp
 
 from fantasyasst.player import Player
@@ -10,7 +8,6 @@ from fantasyasst.optimizer.exceptions import OptimizerException
 class DfsOptimizer:
     UTILITY_CONSTRAINT = 'utility_constraint'
     LB_SUFFIX = '_lb'
-    UB_SUFFIX = '_ub'
     IP_STATUS_STR = 'ip_solve_status'
     LINEUP_SALARY_STR = 'lineup_cost'
     LINEUP_POINTS_STR = 'lineup_points'
@@ -140,16 +137,6 @@ class DfsOptimizer:
             position_constraints[position + modifier] = pulp.LpConstraint(
                 affine_expression, sense, position + modifier, requirement)
 
-            buffer = utility_requirement
-            if position in position_to_flex_map:
-                buffer += flex_positions[position_to_flex_map[position]][1]
-
-            if buffer > 0:
-                position_constraints[
-                    position + DfsOptimizer.UB_SUFFIX] = pulp.LpConstraint(
-                    affine_expression, pulp.LpConstraintLE,
-                    position + DfsOptimizer.UB_SUFFIX, requirement + buffer)
-
         return non_flex_count
 
     def add_flex_constraints(self, player_variables, position_constraints,
@@ -187,14 +174,6 @@ class DfsOptimizer:
             position_constraints[flex + modifier] = pulp.LpConstraint(
                 affine_expression, sense, flex + modifier,
                 requirement + non_flex_count[flex])
-
-            if utility_requirement > 0:
-                position_constraints[flex + DfsOptimizer.UB_SUFFIX] = \
-                    pulp.LpConstraint(
-                        affine_expression, pulp.LpConstraintLE,
-                        flex + DfsOptimizer.UB_SUFFIX,
-                        requirement + non_flex_count[flex] +
-                        utility_requirement)
 
     def add_utility_constraint(self, player_variables, position_constraints,
                                utility_requirement, non_utility_count):

@@ -107,6 +107,29 @@ class TestDfsOptimizer(unittest.TestCase):
                                                 self.utility_requirement),
         }
 
+    def test_player_missing_attributes_exception(self):
+        for flex, util in [(None, None), (None, self.utility_requirement),
+                           (self.flex_positions, None),
+                           (self.flex_positions, self.utility_requirement)]:
+            self.assertRaises(ValueError,
+                              DfsOptimizer,
+                              {'p1': {Player.SALARY: 1,
+                                      Player.POINTS_PROJECTION: 1}},
+                              self.positions,
+                              10, flex, util)
+            self.assertRaises(ValueError,
+                              DfsOptimizer,
+                              {'p1': {Player.POSITION: 'pos_1',
+                                      Player.POINTS_PROJECTION: 1}},
+                              self.positions,
+                              10, flex, util)
+            self.assertRaises(ValueError,
+                              DfsOptimizer,
+                              {'p1': {Player.POSITION: 'pos_1',
+                                      Player.SALARY: 1}},
+                              self.positions,
+                              10, flex, util)
+
     def test_player_dict_copy(self):
         for name, optimizer in self.optimizers.items():
             self.assertDictEqual(self.players, optimizer.players,
@@ -132,32 +155,8 @@ class TestDfsOptimizer(unittest.TestCase):
                 self.assertIn(var_key, self.players,
                               msg=name + ' failed for ' + var_key)
 
-    def test_position_requirement_equality_constraint(self):
-        model = self.optimizers[self.POS_ONLY].model
-        for position, requirement in self.positions.items():
-            self.assertIn(position, model.constraints)
-
-            constraint = model.constraints[position]
-            self.assertEqual(pulp.LpConstraintEQ, constraint.sense)
-            self.assertEqual(requirement, -constraint.constant)
-
-            terms = constraint.items()
-            variables_in_constraint = set()
-            for tup in terms:
-                self.assertIn(tup[0].name, self.players)
-                self.assertEqual(position,
-                                 self.players[tup[0].name][Player.POSITION])
-                self.assertEqual(1, tup[1])
-                variables_in_constraint.add(tup[0].name)
-
-            for i, p in self.players.items():
-                if p[Player.POSITION] == position:
-                    self.assertIn(i, variables_in_constraint)
-
-    def test_position_requirement_lb_constraint(self):
+    def test_position_requirement_lb_or_eq_constraint(self):
         for name, optimizer in self.optimizers.items():
-            if name == self.POS_ONLY:
-                continue
             model = optimizer.model
             for position, requirement in self.positions.items():
                 constraint_name = position
@@ -201,38 +200,28 @@ class TestDfsOptimizer(unittest.TestCase):
                                       msg=name + ' failed for ' +
                                           constraint_name)
 
-    def test_position_requirement_ub_constraint(self):
+    def test_flex_requirement_lb_or_eq_constraint(self):
         for name, optimizer in self.optimizers.items():
-            if name == self.POS_ONLY:
+            if self.W_FLEX not in name:
                 continue
+
             model = optimizer.model
-
-            for position, requirement in self.positions.items():
-                suffix = ''
-                buffer = 0
+            for flex, (allowed, requirement) in self.flex_positions.items():
+                constraint_name = flex
                 sense = pulp.LpConstraintEQ
+                buffer = 0
                 if self.W_UTILITY in name:
+                    constraint_name += DfsOptimizer.LB_SUFFIX
+                    sense = pulp.LpConstraintGE
                     buffer = self.utility_requirement
-                    suffix = DfsOptimizer.UB_SUFFIX
-                    sense = pulp.LpConstraintLE
 
-                if self.W_FLEX in name:
-                    for flex, (allowed, req) in self.flex_positions.items():
-                        if position in allowed:
-                            buffer += req
-                            suffix = DfsOptimizer.UB_SUFFIX
-                            sense = pulp.LpConstraintLE
-                            break
-
-                constraint_name = position + suffix
                 self.assertIn(constraint_name, model.constraints,
                               msg=name + ' failed for ' + constraint_name)
 
                 constraint = model.constraints[constraint_name]
                 self.assertEqual(sense, constraint.sense,
                                  msg=name + ' failed for ' + constraint_name)
-                self.assertEqual(requirement + buffer,
-                                 -constraint.constant,
+                self.assertEqual(requirement + buffer, -constraint.constant,
                                  msg=name + ' failed for ' + constraint_name)
 
                 terms = constraint.items()
@@ -240,46 +229,22 @@ class TestDfsOptimizer(unittest.TestCase):
                 for tup in terms:
                     self.assertIn(tup[0].name, self.players,
                                   msg=name + ' failed for ' + constraint_name)
-                    self.assertEqual(position,
-                                     self.players[tup[0].name][Player.POSITION],
-                                     msg=name + ' failed for ' +
-                                         constraint_name)
+                    self.assertIn(self.players[tup[0].name][Player.POSITION],
+                                  allowed, msg=name + ' failed for ' +
+                                               constraint_name)
                     self.assertEqual(1, tup[1],
                                      msg=name + ' failed for ' +
                                          constraint_name)
                     variables_in_constraint.add(tup[0].name)
 
                 for i, p in self.players.items():
-                    if p[Player.POSITION] == position:
+                    if p[Player.POSITION] in allowed:
                         self.assertIn(i, variables_in_constraint,
                                       msg=name + ' failed for ' +
                                           constraint_name)
 
-    def test_player_missing_attributes(self):
-        for flex, util in [(None, None), (None, self.utility_requirement),
-                           (self.flex_positions, None),
-                           (self.flex_positions, self.utility_requirement)]:
-            self.assertRaises(ValueError,
-                              DfsOptimizer,
-                              {'p1': {Player.SALARY: 1,
-                                      Player.POINTS_PROJECTION: 1}},
-                              self.positions,
-                              10, flex, util)
-            self.assertRaises(ValueError,
-                              DfsOptimizer,
-                              {'p1': {Player.POSITION: 'pos_1',
-                                      Player.POINTS_PROJECTION: 1}},
-                              self.positions,
-                              10, flex, util)
-            self.assertRaises(ValueError,
-                              DfsOptimizer,
-                              {'p1': {Player.POSITION: 'pos_1',
-                                      Player.SALARY: 1}},
-                              self.positions,
-                              10, flex, util)
-
-    # def test_all_player_variables_are_valid(self):
-    #     pass
+    # def test_all_constraints_are_valid(self):
+    #     for name, optimizer in self.optimizers.items():
 
     # def test_objective_construction(self):
     #     objective = self.dfs_optimizer.model.objective
