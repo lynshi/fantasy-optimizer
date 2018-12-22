@@ -9,6 +9,11 @@ from fantasyasst.player import Player
 
 
 class TestDfsOptimizer(unittest.TestCase):
+    POS_ONLY = 'positions_only'
+    W_FLEX = 'with_flex'
+    W_UTILITY = 'with_utility'
+    W_FLEX_W_UTILITY = 'with_flex_and_utility'
+
     def setUp(self):
         self.players = {
             'p1': {
@@ -77,49 +82,40 @@ class TestDfsOptimizer(unittest.TestCase):
 
         self.utility_requirement = 1
 
+        self.optimizers = {
+            self.POS_ONLY: DfsOptimizer(self.players,
+                                        self.positions,
+                                        self.budget),
+            self.W_FLEX: DfsOptimizer(self.players, self.positions,
+                                      self.budget,
+                                      flex_positions=self.flex_positions),
+            self.W_UTILITY: DfsOptimizer(self.players, self.positions,
+                                         self.budget, utility_requirement=
+                                         self.utility_requirement),
+            self.W_FLEX_W_UTILITY: DfsOptimizer(self.players, self.positions,
+                                                self.budget,
+                                                utility_requirement=
+                                                self.utility_requirement),
+        }
+
     def test_player_dict_copy(self):
-        optimizer = DfsOptimizer(self.players, self.positions, self.budget)
-        self.assertDictEqual(self.players, optimizer.players)
-
-        optimizer = DfsOptimizer(self.players, self.positions, self.budget,
-                                 flex_positions=self.flex_positions)
-        self.assertDictEqual(self.players, optimizer.players)
-
-        optimizer = DfsOptimizer(self.players, self.positions, self.budget,
-                                 utility_requirement=self.utility_requirement)
-        self.assertDictEqual(self.players, optimizer.players)
-
-        optimizer = DfsOptimizer(self.players, self.positions, self.budget,
-                                 flex_positions=self.flex_positions,
-                                 utility_requirement=self.utility_requirement)
-        self.assertDictEqual(self.players, optimizer.players)
+        for name, optimizer in self.optimizers.items():
+            self.assertDictEqual(self.players, optimizer.players,
+                                 msg=name + ' failed')
 
     def test_player_variable_construction(self):
-        optimizer = DfsOptimizer(self.players, self.positions, self.budget)
-        variables = self.dfs_optimizer.model.variablesDict()
-        for p in self.players:
-            self.assertTrue(p in variables)
-            var = variables[p]
-            self.assertEqual(p, var.name)
-            self.assertEqual(0, var.lowBound)
-            self.assertEqual(1, var.upBound)
-            self.assertTrue(var.isInteger())
+        for name, optimizer in self.optimizers.items():
+            variables = optimizer.model.variablesDict()
+            for p in self.players:
+                self.assertTrue(p in variables)
+                var = variables[p]
+                self.assertEqual(p, var.name)
+                self.assertEqual(0, var.lowBound)
+                self.assertEqual(1, var.upBound)
+                self.assertTrue(var.isInteger())
 
-        for var_key in variables.keys():
-            self.assertTrue(var_key in self.players)
-
-    def test_player_variable_with_flex_construction(self):
-        variables = self.dfs_optimizer_with_flex.model.variablesDict()
-        for p in self.players:
-            self.assertTrue(p in variables)
-            var = variables[p]
-            self.assertEqual(p, var.name)
-            self.assertEqual(0, var.lowBound)
-            self.assertEqual(1, var.upBound)
-            self.assertTrue(var.isInteger())
-
-        for var_key in variables.keys():
-            self.assertTrue(var_key in self.players)
+            for var_key in variables.keys():
+                self.assertTrue(var_key in self.players)
 
     def test_position_requirement_constraint_construction(self):
         for position, requirement in self.positions.items():
@@ -242,12 +238,14 @@ class TestDfsOptimizer(unittest.TestCase):
     def test_player_missing_attributes(self):
         self.assertRaises(ValueError,
                           DfsOptimizer,
-                          {'p1': {PLAYER_SALARY: 1, PLAYER_POINTS_PROJECTION: 1}},
+                          {'p1': {PLAYER_SALARY: 1,
+                                  PLAYER_POINTS_PROJECTION: 1}},
                           self.positions,
                           10)
         self.assertRaises(ValueError,
                           DfsOptimizer,
-                          {'p1': {PLAYER_POSITION: 'pos_1', PLAYER_POINTS_PROJECTION: 1}},
+                          {'p1': {PLAYER_POSITION: 'pos_1',
+                                  PLAYER_POINTS_PROJECTION: 1}},
                           self.positions,
                           10)
         self.assertRaises(ValueError,
@@ -260,12 +258,14 @@ class TestDfsOptimizer(unittest.TestCase):
     def test_player_missing_attributes_with_flex(self):
         self.assertRaises(ValueError,
                           DfsOptimizer,
-                          {'p1': {PLAYER_SALARY: 1, PLAYER_POINTS_PROJECTION: 1}},
+                          {'p1': {PLAYER_SALARY: 1,
+                                  PLAYER_POINTS_PROJECTION: 1}},
                           self.positions_with_flex,
                           10, self.flex_positions)
         self.assertRaises(ValueError,
                           DfsOptimizer,
-                          {'p1': {PLAYER_POSITION: 'pos_1', PLAYER_POINTS_PROJECTION: 1}},
+                          {'p1': {PLAYER_POSITION: 'pos_1',
+                                  PLAYER_POINTS_PROJECTION: 1}},
                           self.positions_with_flex,
                           10, self.flex_positions)
         self.assertRaises(ValueError,
@@ -280,7 +280,8 @@ class TestDfsOptimizer(unittest.TestCase):
         variables_in_objective = set()
         for tup in terms:
             self.assertTrue(tup[0].name in self.players)
-            self.assertEqual(tup[1], self.players[tup[0].name][PLAYER_POINTS_PROJECTION])
+            self.assertEqual(tup[1], self.players[tup[0].name][
+                PLAYER_POINTS_PROJECTION])
             variables_in_objective.add(tup[0].name)
 
         for player, attributes in self.players.items():
@@ -292,7 +293,8 @@ class TestDfsOptimizer(unittest.TestCase):
         variables_in_objective = set()
         for tup in terms:
             self.assertTrue(tup[0].name in self.players)
-            self.assertEqual(tup[1], self.players[tup[0].name][PLAYER_POINTS_PROJECTION])
+            self.assertEqual(tup[1], self.players[tup[0].name][
+                PLAYER_POINTS_PROJECTION])
             variables_in_objective.add(tup[0].name)
 
         for player, attributes in self.players.items():
