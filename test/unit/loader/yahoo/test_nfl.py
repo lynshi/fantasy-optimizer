@@ -21,7 +21,11 @@ class TestNflLoader(unittest.TestCase):
                                            '\",No\n'
                                            'nfl.p.6760,Eli,Manning,QB,NYG,IND,'
                                            'NYG@IND,1:00PM EST,25,15.0,'
-                                           '\" \",No')):
+                                           '\" \",No\n'
+                                           'nfl.p.6767,Kyle,Lauletta,QB,NYG,'
+                                           'IND,NYG@IND,1:00PM EST,25,15.0,'
+                                           'O,No'
+                                 )):
 
                 player_loader = NflLoader.load_players('test.csv')
 
@@ -86,7 +90,11 @@ class TestNflLoader(unittest.TestCase):
                                            '\",No\n'
                                            'nfl.p.6760,Eli,Manning,QB,NYG,IND,'
                                            'NYG@IND,1:00PM EST,25,15.0,'
-                                           '\" \",No')):
+                                           '\" \",No\n'
+                                           'nfl.p.6767,Kyle,Lauletta,QB,NYG,'
+                                           'IND,NYG@IND,1:00PM EST,25,15.0,'
+                                           'O,No'
+                                 )):
                 ignore_conditions = [('Injury Status', 'O'),
                                      ('Injury Status', 'IR'),
                                      ('Injury Status', 'D'),
