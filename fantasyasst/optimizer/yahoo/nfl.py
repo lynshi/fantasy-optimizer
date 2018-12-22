@@ -21,15 +21,18 @@ class NflDfsOptimizer(DfsOptimizer):
         :type flex_positions: set
         """
         super().__init__(players, positions, budget, flex_positions)
+        self.players = players
 
     @classmethod
-    def load_instance_from_csv(cls, file_name, positions=None, budget=None,
+    def load_instance_from_csv(cls, file_name, positions=None,
+                               ignore_conditions=None, budget=None,
                                flex_positions=None):
         """
         Load player data from csv find at 'file_name'
 
         :param file_name: /path/to/file.csv
         :param positions: dict of position -> requirement
+        :param ignore_conditions: conditions for which to ignore players
         :param budget: budget for player selection
         :param flex_positions: set of positions capable of being used in flex
         :return: NflDfsOptimizer instance
@@ -41,12 +44,12 @@ class NflDfsOptimizer(DfsOptimizer):
 
         if positions is None:
             positions = {
-                NFL_POSITIONS_QB: 1,
+                NFL_POSITION_QB: 1,
                 NFL_POSITION_RB: 2,
                 NFL_POSITION_WR: 3,
                 NFL_POSITION_TE: 1,
                 FLEX_POSITION: 1,
-                NFL_POSITION_DST: 1
+                NFL_POSITION_DEF: 1
             }
 
         if budget is None:
@@ -55,9 +58,11 @@ class NflDfsOptimizer(DfsOptimizer):
         if flex_positions is None:
             flex_positions = {NFL_POSITION_RB, NFL_POSITION_WR, NFL_POSITION_TE}
 
-        ignore_conditions = [('Injury Status', 'O'),
-                             ('Injury Status', 'IR'),
-                             ('Injury Status', 'D')]
+        if ignore_conditions is None:
+            ignore_conditions = [('Injury Status', 'O'),
+                                 ('Injury Status', 'IR'),
+                                 ('Injury Status', 'D')]
+
         column_renames = {
             'Position': PLAYER_POSITION,
             'FPPG': PLAYER_POINTS_PROJECTION,
@@ -74,8 +79,36 @@ class NflDfsOptimizer(DfsOptimizer):
 
         return cls(players, positions, budget, flex_positions)
 
-    def generate_lineup(self):
-        result = self.optimize()
+    def generate_lineup(self, display_lineup=True) -> dict:
+        """
+        Generate optimal DFS lineup based on player salaries and point
+            projections
 
-    def print_lineup(self):
-        pass
+        :param display_lineup: if true, print lineup in JSON to console
+        :return: dict that is the lineup, organized by position
+        """
+        result = self.optimize()
+        lineup = {
+            'QB': [],
+            'RB': [],
+            'WR': [],
+            'TE': [],
+            'DEF': [],
+        }
+
+        for p in result[LINEUP_PLAYERS_STR]:
+            player = self.players[p]
+            pos = player[PLAYER_POSITION]
+            lineup[pos].append({
+                NAME_STR: player['First Name'] + ' ' + player['Last Name'],
+                PROJECTED_POINTS_STR: player[PLAYER_POINTS_PROJECTION],
+                OPPONENT_STR: player['Opponent'],
+                GAME_TIME_STR: player['Time'],
+                SALARY_STR: player[PLAYER_SALARY],
+                INJURY_STATUS_STR: player['Injury Status']
+            })
+
+        if display_lineup is True:
+            print(json.dumps(lineup, sort_keys=True, indent=4))
+
+        return lineup

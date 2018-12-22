@@ -5,6 +5,7 @@ import pandas as pd
 import pulp
 
 from fantasyasst.constants import *
+from fantasyasst.optimizer.exceptions import OptimizerException
 
 
 class DfsOptimizer(ABC):
@@ -135,7 +136,8 @@ class DfsOptimizer(ABC):
         result = {IP_STATUS_STR: self.model.status, LINEUP_SALARY_STR: None,
                   LINEUP_PLAYERS_STR: set(), LINEUP_POINTS_STR: None}
         if self.model.status != pulp.LpStatusOptimal:
-            return result
+            raise OptimizerException('Model exited with status ' +
+                                     str(self.model.status))
 
         result[LINEUP_SALARY_STR] = \
             pulp.value(self.model.constraints[LINEUP_SALARY_STR]) - \
@@ -150,7 +152,8 @@ class DfsOptimizer(ABC):
 
     @classmethod
     @abstractmethod
-    def load_instance_from_csv(cls, file_name, positions=None, budget=None,
+    def load_instance_from_csv(cls, file_name, positions=None,
+                               ignore_conditions=None, budget=None,
                                flex_positions=None):
         pass
 
@@ -199,9 +202,5 @@ class DfsOptimizer(ABC):
         return df.to_dict('index')
 
     @abstractmethod
-    def generate_lineup(self):
-        pass
-
-    @abstractmethod
-    def print_lineup(self):
+    def generate_lineup(self, display_lineup=True):
         pass

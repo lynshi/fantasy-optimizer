@@ -5,6 +5,7 @@ from unittest.mock import mock_open, patch
 
 from fantasyasst.constants import *
 from fantasyasst.optimizer.dfs import DfsOptimizer
+from fantasyasst.optimizer.exceptions import OptimizerException
 
 
 class TestDfsOptimizer(unittest.TestCase):
@@ -352,16 +353,14 @@ class TestDfsOptimizer(unittest.TestCase):
                                          PLAYER_SALARY: 1,
                                          PLAYER_POINTS_PROJECTION: 25}},
                                  self.positions, 10)
-        result = optimizer.optimize()
-        self.assertEqual(result[IP_STATUS_STR], pulp.LpStatusInfeasible)
+        self.assertRaises(OptimizerException, optimizer.optimize)
 
         optimizer = DfsOptimizer({'p1': {PLAYER_POSITION: 'position_1',
                                          PLAYER_SALARY: 1,
                                          PLAYER_POINTS_PROJECTION: 25}},
                                  self.positions_with_flex, 10,
                                  self.flex_positions)
-        result = optimizer.optimize()
-        self.assertEqual(result[IP_STATUS_STR], pulp.LpStatusInfeasible)
+        self.assertRaises(OptimizerException, optimizer.optimize)
 
     def test_import_csv(self):
         with patch('os.path.isfile') as mock_isfile:
