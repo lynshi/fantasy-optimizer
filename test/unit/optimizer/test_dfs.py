@@ -352,6 +352,21 @@ class TestDfsOptimizer(unittest.TestCase):
 
         self.assertDictEqual(correct, result)
 
+    def test_optimize_utility(self):
+        result = self.optimizers[self.W_UTILITY].optimize()
+        lineup = {'p9', 'p7', 'p5', 'p2', 'p4', 'p8'}
+        salary = 34
+        projection = 115
+
+        correct = {
+            DfsOptimizer.IP_STATUS: pulp.LpStatusOptimal,
+            DfsOptimizer.LINEUP_PLAYERS: lineup,
+            DfsOptimizer.LINEUP_SALARY: salary,
+            DfsOptimizer.LINEUP_POINTS: projection
+        }
+
+        self.assertDictEqual(correct, result)
+
     #
     # def test_optimize_result(self):
     #     result = self.dfs_optimizer.optimize()
