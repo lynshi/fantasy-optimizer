@@ -8,7 +8,7 @@ from fantasyasst.player import Player
 
 class TestPlayerLoader(unittest.TestCase):
     @patch.multiple(PlayerLoader, __abstractmethods__=set())
-    def setUp(self):
+    def test_import_and_df_to_dict(self):
         with patch('os.path.isfile') as mock_isfile:
             mock_isfile.return_value = True
             with patch('builtins.open',
@@ -43,7 +43,7 @@ class TestPlayerLoader(unittest.TestCase):
                     'Salary': Player.SALARY
                 }
 
-                self.player_loader = PlayerLoader(
+                player_loader = PlayerLoader(
                     PlayerLoader.import_csv('test.csv',
                                             'Id',
                                             {
@@ -54,7 +54,6 @@ class TestPlayerLoader(unittest.TestCase):
                                             apply_functions)
                 )
 
-    def test_import_and_df_to_dict(self):
         correct = {
             "nfl.p.27540": {
                 "First Name": "Odell",
@@ -102,7 +101,7 @@ class TestPlayerLoader(unittest.TestCase):
                 Player.NAME[::-1]: "Manning Eli"
             }
         }
-        self.assertDictEqual(correct, self.player_loader.get_player_dict())
+        self.assertDictEqual(correct, player_loader.get_player_dict())
 
     def test_import_csv_from_not_csv(self):
         with patch('os.path.isfile') as mock_isfile:

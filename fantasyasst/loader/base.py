@@ -19,9 +19,9 @@ class PlayerLoader(ABC):
         pass
 
     @staticmethod
-    def import_csv(file_name, index_column, data_type, column_renames,
-                   row_ignore_conditions,
-                   functions_to_apply) -> pd.DataFrame:
+    def import_csv(file_name, index_column=None, data_type=None,
+                   column_renames=None, row_ignore_conditions=None,
+                   functions_to_apply=None) -> pd.DataFrame:
         """
         Load player data from csv find at 'file_name'
 
