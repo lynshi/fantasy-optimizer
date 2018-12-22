@@ -1,5 +1,6 @@
 import sys
 
+from fantasyasst.constants import *
 import fantasyasst.optimizer.yahoo as yh
 
 
@@ -11,7 +12,11 @@ def optimize_lineup(site, csv_location):
     if site not in optimizers:
         raise ValueError('Unsupported site ' + site)
 
-    optimizer = optimizers[site].load_instance_from_csv(csv_location)
+    ignore_conditions = {(INJURY_STATUS_STR, 'Q')}
+    ignore_conditions.update(
+        yh.nfl.NflDfsOptimizer.default_player_ignore_conditions())
+    optimizer = optimizers[site].load_instance_from_csv(
+        csv_location, ignore_conditions=ignore_conditions)
     optimizer.generate_lineup()
 
 

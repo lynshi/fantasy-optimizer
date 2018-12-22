@@ -7,6 +7,26 @@ from fantasyasst.optimizer.dfs import DfsOptimizer
 
 
 class NflDfsOptimizer(DfsOptimizer):
+    _DEFAULT_POSITIONS = {
+                'QB': 1,
+                'RB': 2,
+                'WR': 3,
+                'TE': 1,
+                FLEX_POSITION: 1,
+                'DEF': 1
+            }
+    _DEFAULT_BUDGET = 200
+    _DEFAULT_FLEX_POSITIONS = {'RB', 'WR', 'TE'}
+    _DEFAULT_PLAYER_IGNORE_CONDITIONS = [
+        ('Injury Status', 'O'),
+        ('Injury Status', 'IR'),
+        ('Injury Status', 'D')
+    ]
+
+    @staticmethod
+    def default_player_ignore_conditions():
+        return NflDfsOptimizer._DEFAULT_PLAYER_IGNORE_CONDITIONS.copy()
+
     def __init__(self, players, positions, budget, flex_positions=None):
         """
         Construct NflDfsOptimizer for player selection optimization
@@ -43,25 +63,17 @@ class NflDfsOptimizer(DfsOptimizer):
             raise ValueError('file ' + file_name + ' does not exist')
 
         if positions is None:
-            positions = {
-                NFL_POSITION_QB: 1,
-                NFL_POSITION_RB: 2,
-                NFL_POSITION_WR: 3,
-                NFL_POSITION_TE: 1,
-                FLEX_POSITION: 1,
-                NFL_POSITION_DEF: 1
-            }
+            positions = NflDfsOptimizer._DEFAULT_POSITIONS
 
         if budget is None:
-            budget = 200
+            budget = NflDfsOptimizer._DEFAULT_BUDGET
 
         if flex_positions is None:
-            flex_positions = {NFL_POSITION_RB, NFL_POSITION_WR, NFL_POSITION_TE}
+            flex_positions = NflDfsOptimizer._DEFAULT_FLEX_POSITIONS
 
         if ignore_conditions is None:
-            ignore_conditions = [('Injury Status', 'O'),
-                                 ('Injury Status', 'IR'),
-                                 ('Injury Status', 'D')]
+            ignore_conditions = \
+                NflDfsOptimizer._DEFAULT_PLAYER_IGNORE_CONDITIONS
 
         column_renames = {
             'Position': PLAYER_POSITION,
