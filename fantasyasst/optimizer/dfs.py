@@ -1,38 +1,42 @@
-from abc import ABC, abstractmethod
-import numpy as np
+import json
 import os
 import pandas as pd
 import pulp
 
-from fantasyasst.constants import *
+from fantasyasst.player import Player
 from fantasyasst.optimizer.exceptions import OptimizerException
 
 
-class DfsOptimizer(ABC):
-    def __init__(self, players, positions, budget, flex_positions=None):
+class DfsOptimizer():
+    UTILITY_CONSTRAINT = 'utility_constraint'
+    LB_SUFFIX = '_lb'
+    UB_SUFFIX = '_ub'
+    IP_STATUS_STR = 'ip_solve_status'
+    LINEUP_SALARY_STR = 'lineup_cost'
+    LINEUP_POINTS_STR = 'lineup_points'
+    LINEUP_PLAYERS_STR = 'lineup_players'
+
+    def __init__(self, players, positions, budget, flex_positions=None,
+                 utility_requirement=0):
         """
         Construct IP model for player selection optimization
 
         :param players:  dictionary of dictionaries representing players
-        :type players: dict
-        :param positions: dictionary of position -> limit
-        :type positions: dict
+        :param positions: dictionary of position -> requirement
         :param budget: budget for player selection
-        :type budget: int
-        :param flex_positions: set of positions capable of being used in flex
-        :type flex_positions: set
+        :param flex_positions: dict of
+            flex position name -> (set of valid positions, number required)
+            One position should not be present in two flex positions
+        :param utility_requirement: number of utility players required. This
+            parameter should only be used for roster positions that accept
+            players from any position (e.g. Util in Yahoo NBA DFS)
 
-        :raises ValueError:
-            if FLEX_POSITION in positions but flex_positions is None
-            if any player does not have all required attributes
+        :raises ValueError: if any player does not have all required attributes
         """
 
-        if FLEX_POSITION in positions and flex_positions is None:
-            raise ValueError('\'flex_positions\' cannot be empty if '
-                             '\'FLEX_POSITION\' in \'positions\'')
-
         for player, attributes in players.items():
-            for attr in [PLAYER_POSITION, PLAYER_POINTS_PROJECTION, PLAYER_SALARY]:
+            for attr in [Player.POSITION, Player.POINTS_PROJECTION,
+                         Player.SALARY]:
                 if attr not in attributes.keys():
                     raise ValueError('player \'' + player + '\' is missing '
                                                             'required '
@@ -40,122 +44,193 @@ class DfsOptimizer(ABC):
                                      attr + '\'')
 
         # pass '%' so there is no leading underscore in the variable name
-        player_variables = pulp.LpVariable.dict('%s', players.keys(),
-                                                lowBound=0, upBound=1,
-                                                cat='Integer')
-        position_constraints = {}
-        if FLEX_POSITION not in positions:
-            for position, requirement in positions.items():
-                affine_expression = \
-                    pulp.LpAffineExpression([(player_variables[player], 1)
-                                             for player, attributes in
-                                             players.items() if
-                                             attributes[PLAYER_POSITION] ==
-                                             position])
+        self.player_variables = pulp.LpVariable.dict('%s', players.keys(),
+                                                     lowBound=0, upBound=1,
+                                                     cat='Integer')
+        self.players = players
+        self.position_constraints = {}
+        non_flex_count = self.add_position_constraints(positions,
+                                                       flex_positions,
+                                                       utility_requirement)
 
-                position_constraints[position] = pulp.LpConstraint(
-                    affine_expression, pulp.LpConstraintEQ, position,
-                    requirement)
-        else:
-            non_flex_total = 0
-            # the number of players at flex positions that
-            # aren't used for the flex position
-            for position, requirement in positions.items():
-                if position != FLEX_POSITION and position in flex_positions:
-                    non_flex_total += requirement
-                    affine_expression = \
-                        pulp.LpAffineExpression([(player_variables[player], 1)
-                                                 for player, attributes in
-                                                 players.items() if
-                                                 attributes[PLAYER_POSITION] ==
-                                                 position])
+        if flex_positions is not None:
+            self.add_flex_constraints(flex_positions, non_flex_count,
+                                      utility_requirement)
 
-                    position_constraints[position + LB_SUFFIX] = \
-                        pulp.LpConstraint(
-                            affine_expression, pulp.LpConstraintGE,
-                            position + LB_SUFFIX,
-                            requirement)
+        if utility_requirement > 0:
+            non_utility_count = 0
+            for pos, count in positions.items:
+                non_utility_count += count
+            if flex_positions is not None:
+                for flex, pos, count in flex_positions:
+                    non_utility_count += count
 
-                    position_constraints[position + UB_SUFFIX] = \
-                        pulp.LpConstraint(
-                            affine_expression, pulp.LpConstraintLE,
-                            position + UB_SUFFIX,
-                            requirement + positions[FLEX_POSITION])
-                elif position != FLEX_POSITION:
-                    affine_expression = \
-                        pulp.LpAffineExpression([(player_variables[player], 1)
-                                                 for player, attributes in
-                                                 players.items() if
-                                                 attributes[PLAYER_POSITION] ==
-                                                 position])
-
-                    position_constraints[position] = pulp.LpConstraint(
-                        affine_expression, pulp.LpConstraintEQ, position,
-                        requirement)
-
-            affine_expression = \
-                pulp.LpAffineExpression([(player_variables[player], 1)
-                                         for player, attributes in
-                                         players.items() if
-                                         attributes[PLAYER_POSITION] in
-                                         flex_positions])
-
-            position_constraints[FLEX_POSITION] = pulp.LpConstraint(
-                affine_expression, pulp.LpConstraintEQ, FLEX_POSITION,
-                positions[FLEX_POSITION] + non_flex_total)
+            self.add_utility_constraint(utility_requirement, non_utility_count)
 
         budget_expression = \
-            pulp.LpAffineExpression([(player_variables[player],
-                                      attributes[PLAYER_SALARY])
+            pulp.LpAffineExpression([(self.player_variables[player],
+                                      attributes[Player.SALARY])
                                      for player, attributes in players.items()])
         budget_constraint = pulp.LpConstraint(
-            budget_expression, pulp.LpConstraintLE, LINEUP_SALARY_STR, budget)
+            budget_expression, pulp.LpConstraintLE, self.LINEUP_SALARY_STR,
+            budget)
 
         self.model = pulp.LpProblem('DFS Optimizer', pulp.LpMaximize)
         self.model += sum([
-            attributes[PLAYER_POINTS_PROJECTION] * player_variables[player]
+            attributes[Player.POINTS_PROJECTION] * self.player_variables[player]
             for player, attributes in players.items()
         ])
 
-        self.model.constraints = position_constraints
-        self.model.constraints.update({LINEUP_SALARY_STR: budget_constraint})
+        self.model.constraints = self.position_constraints
+        self.model.constraints.update({
+            self.LINEUP_SALARY_STR: budget_constraint
+        })
+
+        del self.player_variables
+        del self.position_constraints
+
+    def add_position_constraints(self, positions, flex_positions,
+                                 utility_requirement):
+        """
+        Add position constraints
+
+        :param positions: dictionary of position -> requirement
+        :param flex_positions: dict of
+            flex position name -> (set of valid positions, number required)
+            One position should not be present in two flex positions
+        :param utility_requirement: number of utility players required. This
+            parameter should only be used for roster positions that accept
+            players from any position (e.g. Util in Yahoo NBA DFS)
+        :return: total number of players required
+        """
+        # the number of players at flex positions that
+        # aren't used for the flex position
+        non_flex_count = {}
+        # position to the flex position they can contribute to
+        position_to_flex_map = {}
+
+        if flex_positions is not None:
+            for flex, allowed, requirement in flex_positions.items():
+                non_flex_count[flex] = 0
+                for p in allowed:
+                    position_to_flex_map[p] = flex
+
+        for position, requirement in positions.items():
+            affine_expression = \
+                pulp.LpAffineExpression([(self.player_variables[player], 1)
+                                         for player, attributes in
+                                         self.players.items() if
+                                         attributes[Player.POSITION] ==
+                                         position])
+
+            sense = pulp.LpConstraintEQ
+            modifier = ''
+            if position in position_to_flex_map:
+                sense = pulp.LpConstraintGE
+                modifier = self.LB_SUFFIX
+                non_flex_count[position_to_flex_map[position]] += requirement
+
+            self.position_constraints[position + modifier] = pulp.LpConstraint(
+                affine_expression, sense, position + modifier, requirement)
+
+            if position in position_to_flex_map:
+                self.position_constraints[
+                    position + self.UB_SUFFIX] = pulp.LpConstraint(
+                    affine_expression, pulp.LpConstraintLE,
+                    position + self.UB_SUFFIX,
+                    requirement + utility_requirement +
+                    flex_positions[position_to_flex_map[position]])
+
+        return non_flex_count
+
+    def add_flex_constraints(self, flex_positions, non_flex_count,
+                             utility_requirement):
+        """
+        Add flex constraints
+
+        :param flex_positions: dict of
+            flex position name -> (set of valid positions, number required)
+            One position should not be present in two flex positions
+        :param non_flex_count: dict of flex position -> number of players
+            required in positional requirements
+        :param utility_requirement: number of utility players required. This
+            parameter should only be used for roster positions that accept
+            players from any position (e.g. Util in Yahoo NBA DFS)
+        :return: None
+        """
+        for flex, allowed, requirement in flex_positions.items():
+            affine_expression = \
+                pulp.LpAffineExpression([(self.player_variables[player], 1)
+                                         for player, attributes in
+                                         self.players.items() if
+                                         attributes[Player.POSITION] in
+                                         allowed])
+
+            sense = pulp.LpConstraintEQ
+            modifier = ''
+            if utility_requirement > 0:
+                sense = pulp.LpConstraintGE
+                modifier = self.LB_SUFFIX
+
+            self.position_constraints[flex + modifier] = pulp.LpConstraint(
+                affine_expression, sense, flex + modifier,
+                requirement + non_flex_count[flex])
+
+            if utility_requirement > 0:
+                self.position_constraints[flex + self.UB_SUFFIX] = \
+                    pulp.LpConstraint(
+                        affine_expression, pulp.LpConstraintLE,
+                        flex + self.UB_SUFFIX,
+                        requirement + non_flex_count[flex] +
+                        utility_requirement)
+
+    def add_utility_constraint(self, utility_requirement, non_utility_count):
+        """
+        Add utility position requirement. A utility position is one that accepts
+        a player from any position.
+
+        :param utility_requirement: number of utility players required
+        :param non_utility_count: number of players required to be non-utility
+        :return: None
+        """
+        affine_expression = \
+            pulp.LpAffineExpression([(self.player_variables[player], 1)
+                                     for player, attributes in
+                                     self.players.items()])
+        self.position_constraints[self.UTILITY_CONSTRAINT] = pulp.LpConstraint(
+            affine_expression, pulp.LpConstraintEQ, self.UTILITY_CONSTRAINT,
+            utility_requirement + non_utility_count)
 
     def optimize(self) -> dict:
         """
         Optimize IP to find best lineup for given model
 
         :return: dictionary of the form {
-            IP_STATUS_STR: solve status,
-            LINEUP_COST_STR: cost of lineup,
-            LINEUP_PLAYERS_STR: set of players to put in lineup,
-            LINEUP_POINTS_STR: total points scored projection
+            DfsOptimizer.IP_STATUS_STR: solve status,
+            DfsOptimizer.LINEUP_SALARY_STR: cost of lineup,
+            DfsOptimizer.LINEUP_PLAYERS_STR: set of players to put in lineup,
+            DfsOptimizer.LINEUP_POINTS_STR: total points scored projection
         }
         """
         self.model.solve()
 
-        result = {IP_STATUS_STR: self.model.status, LINEUP_SALARY_STR: None,
-                  LINEUP_PLAYERS_STR: set(), LINEUP_POINTS_STR: None}
+        result = {self.IP_STATUS_STR: self.model.status,
+                  self.LINEUP_SALARY_STR: None,
+                  self.LINEUP_PLAYERS_STR: set(), self.LINEUP_POINTS_STR: None}
         if self.model.status != pulp.LpStatusOptimal:
             raise OptimizerException('Model exited with status ' +
                                      str(self.model.status))
 
-        result[LINEUP_SALARY_STR] = \
-            pulp.value(self.model.constraints[LINEUP_SALARY_STR]) - \
-            self.model.constraints[LINEUP_SALARY_STR].constant
-        result[LINEUP_POINTS_STR] = pulp.value(self.model.objective)
+        result[self.LINEUP_SALARY_STR] = \
+            pulp.value(self.model.constraints[self.LINEUP_SALARY_STR]) - \
+            self.model.constraints[self.LINEUP_SALARY_STR].constant
+        result[self.LINEUP_POINTS_STR] = pulp.value(self.model.objective)
 
         for var_name, var in self.model.variablesDict().items():
             if var.varValue == 1:
-                result[LINEUP_PLAYERS_STR].add(var.name)
+                result[self.LINEUP_PLAYERS_STR].add(var.name)
 
         return result
-
-    @classmethod
-    @abstractmethod
-    def load_instance_from_csv(cls, file_name, positions=None,
-                               ignore_conditions=None, budget=None,
-                               flex_positions=None):
-        pass
 
     @staticmethod
     def import_csv(file_name, index_column, data_type, column_renames,
@@ -201,6 +276,39 @@ class DfsOptimizer(ABC):
 
         return df.to_dict('index')
 
-    @abstractmethod
     def generate_lineup(self, display_lineup=True):
-        pass
+        """
+        Generate optimal DFS lineup based on player salaries and point
+            projections
+
+        :param display_lineup: if true, print lineup in JSON to console
+        :return: dict that is the lineup, organized by position
+        """
+        result = self.optimize()
+        lineup = {
+            'QB': [],
+            'RB': [],
+            'WR': [],
+            'TE': [],
+            'DEF': [],
+        }
+
+        for p in result[self.LINEUP_PLAYERS_STR]:
+            player = self.players[p]
+            pos = player[Player.POSITION]
+
+            # to remove extra information that may be contained in player
+            lineup[pos].append({
+                Player.NAME: player[Player.NAME],
+                Player.POINTS_PROJECTION: player[Player.POINTS_PROJECTION],
+                Player.OPPONENT: player[Player.OPPONENT],
+                Player.GAME_TIME: player[Player.GAME_TIME],
+                Player.SALARY: player[Player.SALARY],
+                Player.INJURY_STATUS: player[Player.INJURY_STATUS],
+                Player.TEAM: player[Player.TEAM]
+            })
+
+        if display_lineup is True:
+            print(json.dumps(lineup, sort_keys=True, indent=4))
+
+        return lineup

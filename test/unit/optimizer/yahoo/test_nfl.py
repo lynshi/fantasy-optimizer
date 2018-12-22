@@ -90,6 +90,10 @@ class TestNflDfsOptimizer(unittest.TestCase):
         }
         self.assertDictEqual(correct, result)
 
+    def test_default_player_ignore_conditions(self):
+        self.assertListEqual(NflDfsOptimizer.default_player_ignore_conditions(),
+                             NflDfsOptimizer._DEFAULT_PLAYER_IGNORE_CONDITIONS)
+
 
 if __name__ == '__main__':
     unittest.main()
