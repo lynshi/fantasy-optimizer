@@ -300,20 +300,22 @@ class TestDfsOptimizer(unittest.TestCase):
             for constraint_name in constraints.keys():
                 self.assertIn(constraint_name, allowed_constraints)
 
+    def test_objective_construction(self):
+        for name, optimizer in self.optimizers.items():
+            objective = optimizer.model.objective
 
-    # def test_objective_construction(self):
-    #     objective = self.dfs_optimizer.model.objective
-    #     terms = objective.items()
-    #     variables_in_objective = set()
-    #     for tup in terms:
-    #         self.assertTrue(tup[0].name in self.players)
-    #         self.assertEqual(tup[1], self.players[tup[0].name][
-    #             PLAYER_POINTS_PROJECTION])
-    #         variables_in_objective.add(tup[0].name)
-    #
-    #     for player, attributes in self.players.items():
-    #         self.assertTrue(player in variables_in_objective)
-    #
+            terms = objective.items()
+            variables_in_objective = set()
+            for tup in terms:
+                self.assertIn(tup[0].name, self.players)
+                self.assertEqual(self.players[tup[0].name][
+                                     Player.POINTS_PROJECTION],
+                                 tup[1])
+                variables_in_objective.add(tup[0].name)
+
+            for i, p in self.players.items():
+                self.assertIn(i, variables_in_objective)
+
     # def test_objective_with_flex_construction(self):
     #     objective = self.dfs_optimizer_with_flex.model.objective
     #     terms = objective.items()
