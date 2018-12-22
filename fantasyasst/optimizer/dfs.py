@@ -133,21 +133,25 @@ class DfsOptimizer:
 
             sense = pulp.LpConstraintEQ
             modifier = ''
-            if position in position_to_flex_map:
+            if position in position_to_flex_map or utility_requirement > 0:
                 sense = pulp.LpConstraintGE
                 modifier = DfsOptimizer.LB_SUFFIX
-                non_flex_count[position_to_flex_map[position]] += requirement
+                if position in position_to_flex_map:
+                    non_flex_count[position_to_flex_map[position]] += \
+                        requirement
 
             position_constraints[position + modifier] = pulp.LpConstraint(
                 affine_expression, sense, position + modifier, requirement)
 
+            buffer = utility_requirement
             if position in position_to_flex_map:
+                buffer += flex_positions[position_to_flex_map[position]][1]
+
+            if position in position_to_flex_map or utility_requirement > 0:
                 position_constraints[
                     position + DfsOptimizer.UB_SUFFIX] = pulp.LpConstraint(
                     affine_expression, pulp.LpConstraintLE,
-                    position + DfsOptimizer.UB_SUFFIX,
-                    requirement + utility_requirement +
-                    flex_positions[position_to_flex_map[position]][1])
+                    position + DfsOptimizer.UB_SUFFIX, requirement + buffer)
 
         return non_flex_count
 
