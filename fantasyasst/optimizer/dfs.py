@@ -7,10 +7,10 @@ from fantasyasst.optimizer.exceptions import OptimizerException
 
 class DfsOptimizer:
     UTILITY_CONSTRAINT = 'utility_constraint'
-    IP_STATUS_STR = 'ip_solve_status'
-    LINEUP_SALARY_STR = 'lineup_cost'
-    LINEUP_POINTS_STR = 'lineup_points'
-    LINEUP_PLAYERS_STR = 'lineup_players'
+    IP_STATUS = 'ip_solve_status'
+    LINEUP_SALARY = 'lineup_cost'
+    LINEUP_POINTS = 'lineup_points'
+    LINEUP_PLAYERS = 'lineup_players'
 
     def __init__(self, players, positions, budget, flex_positions=None,
                  utility_requirement=0):
@@ -75,7 +75,7 @@ class DfsOptimizer:
                                      for player, attributes in players.items()])
         budget_constraint = pulp.LpConstraint(
             budget_expression, pulp.LpConstraintLE,
-            DfsOptimizer.LINEUP_SALARY_STR, budget)
+            DfsOptimizer.LINEUP_SALARY, budget)
 
         self.model = pulp.LpProblem('DFS Optimizer', pulp.LpMaximize)
         self.model += sum([
@@ -85,7 +85,7 @@ class DfsOptimizer:
 
         self.model.constraints = position_constraints
         self.model.constraints.update({
-            self.LINEUP_SALARY_STR: budget_constraint
+            self.LINEUP_SALARY: budget_constraint
         })
 
     def add_position_constraints(self, player_variables,
@@ -204,25 +204,25 @@ class DfsOptimizer:
         """
         self.model.solve()
 
-        result = {DfsOptimizer.IP_STATUS_STR: self.model.status,
-                  DfsOptimizer.LINEUP_SALARY_STR: None,
-                  DfsOptimizer.LINEUP_PLAYERS_STR: set(),
-                  DfsOptimizer.LINEUP_POINTS_STR: None}
+        result = {DfsOptimizer.IP_STATUS: self.model.status,
+                  DfsOptimizer.LINEUP_SALARY: None,
+                  DfsOptimizer.LINEUP_PLAYERS: set(),
+                  DfsOptimizer.LINEUP_POINTS: None}
         if self.model.status != pulp.LpStatusOptimal:
             raise OptimizerException('Model exited with status ' +
                                      str(self.model.status))
 
-        result[DfsOptimizer.LINEUP_SALARY_STR] = \
+        result[DfsOptimizer.LINEUP_SALARY] = \
             pulp.value(
-                self.model.constraints[DfsOptimizer.LINEUP_SALARY_STR]) - \
-            self.model.constraints[DfsOptimizer.LINEUP_SALARY_STR].constant
+                self.model.constraints[DfsOptimizer.LINEUP_SALARY]) - \
+            self.model.constraints[DfsOptimizer.LINEUP_SALARY].constant
 
-        result[DfsOptimizer.LINEUP_POINTS_STR] = \
+        result[DfsOptimizer.LINEUP_POINTS] = \
             pulp.value(self.model.objective)
 
         for var_name, var in self.model.variablesDict().items():
             if var.varValue == 1:
-                result[DfsOptimizer.LINEUP_PLAYERS_STR].add(var.name)
+                result[DfsOptimizer.LINEUP_PLAYERS].add(var.name)
 
         return result
 
@@ -243,7 +243,7 @@ class DfsOptimizer:
             'DEF': [],
         }
 
-        for p in result[DfsOptimizer.LINEUP_PLAYERS_STR]:
+        for p in result[DfsOptimizer.LINEUP_PLAYERS]:
             player = self.players[p]
             pos = player[Player.POSITION]
 

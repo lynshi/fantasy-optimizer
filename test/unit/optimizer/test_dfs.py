@@ -264,8 +264,8 @@ class TestDfsOptimizer(unittest.TestCase):
     def test_budget_constraint(self):
         for name, optimizer in self.optimizers.items():
             model = optimizer.model
-            self.assertIn(DfsOptimizer.LINEUP_SALARY_STR, model.constraints)
-            constraint = model.constraints[DfsOptimizer.LINEUP_SALARY_STR]
+            self.assertIn(DfsOptimizer.LINEUP_SALARY, model.constraints)
+            constraint = model.constraints[DfsOptimizer.LINEUP_SALARY]
 
             self.assertEqual(pulp.LpConstraintLE, constraint.sense)
             self.assertEqual(self.budget, -constraint.constant)
@@ -284,7 +284,7 @@ class TestDfsOptimizer(unittest.TestCase):
     def test_all_constraints_are_valid(self):
         for name, optimizer in self.optimizers.items():
             constraints = optimizer.model.constraints
-            allowed_constraints = {DfsOptimizer.LINEUP_SALARY_STR}
+            allowed_constraints = {DfsOptimizer.LINEUP_SALARY}
             for pos in self.positions:
                 allowed_constraints.add(pos)
 
@@ -316,11 +316,27 @@ class TestDfsOptimizer(unittest.TestCase):
     def test_optimize_result_format(self):
         for name, optimizer in self.optimizers.items():
             result = optimizer.optimize()
-            for key in [DfsOptimizer.IP_STATUS_STR,
-                        DfsOptimizer.LINEUP_SALARY_STR,
-                        DfsOptimizer.LINEUP_PLAYERS_STR,
-                        DfsOptimizer.LINEUP_POINTS_STR]:
+            for key in [DfsOptimizer.IP_STATUS,
+                        DfsOptimizer.LINEUP_SALARY,
+                        DfsOptimizer.LINEUP_PLAYERS,
+                        DfsOptimizer.LINEUP_POINTS]:
                 self.assertIn(key, result, msg=name + ' failed')
+
+    def test_optimize_positions_only(self):
+        result = self.optimizers[self.POS_ONLY].optimize()
+        lineup = {'p9', 'p7', 'p3', 'p2', 'p5'}
+        salary = 35.0
+        projection = 92.0
+
+        correct = {
+            DfsOptimizer.IP_STATUS: pulp.LpStatusOptimal,
+            DfsOptimizer.LINEUP_PLAYERS: lineup,
+            DfsOptimizer.LINEUP_SALARY: salary,
+            DfsOptimizer.LINEUP_POINTS: projection
+        }
+
+        self.assertDictEqual(correct, result)
+
     #
     # def test_optimize_result(self):
     #     result = self.dfs_optimizer.optimize()
