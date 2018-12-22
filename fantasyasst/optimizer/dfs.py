@@ -67,7 +67,6 @@ class DfsOptimizer:
             for pos, count in positions.items():
                 non_utility_count += count
             if flex_positions is not None:
-                print(flex_positions)
                 for flex, (pos, count) in flex_positions.items():
                     non_utility_count += count
 
@@ -121,6 +120,7 @@ class DfsOptimizer:
             for flex, (allowed, requirement) in flex_positions.items():
                 non_flex_count[flex] = 0
                 for p in allowed:
+                    non_flex_count[flex] += positions[p]
                     position_to_flex_map[p] = flex
 
         for position, requirement in positions.items():
@@ -136,9 +136,6 @@ class DfsOptimizer:
             if position in position_to_flex_map or utility_requirement > 0:
                 sense = pulp.LpConstraintGE
                 modifier = DfsOptimizer.LB_SUFFIX
-                if position in position_to_flex_map:
-                    non_flex_count[position_to_flex_map[position]] += \
-                        requirement
 
             position_constraints[position + modifier] = pulp.LpConstraint(
                 affine_expression, sense, position + modifier, requirement)
@@ -147,7 +144,7 @@ class DfsOptimizer:
             if position in position_to_flex_map:
                 buffer += flex_positions[position_to_flex_map[position]][1]
 
-            if position in position_to_flex_map or utility_requirement > 0:
+            if buffer > 0:
                 position_constraints[
                     position + DfsOptimizer.UB_SUFFIX] = pulp.LpConstraint(
                     affine_expression, pulp.LpConstraintLE,
