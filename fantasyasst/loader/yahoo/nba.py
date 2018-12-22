@@ -9,7 +9,7 @@ from fantasyasst.loader.base import PlayerLoader
 class NbaLoader(PlayerLoader):
     def __init__(self, df):
         """
-        Initialize NflLoader instance
+        Initialize NbaLoader instance
 
         :param df: DataFrame of data
         :type df: pd.DataFrame
@@ -23,13 +23,8 @@ class NbaLoader(PlayerLoader):
 
         :param file_name: /path/to/file.csv
         :param ignore_conditions: conditions for which to ignore players
-        :return: NflLoader instance
-        :raises ValueError: file_name does not exist
+        :return: NbaLoader instance
         """
-
-        if os.path.isfile(file_name) is False:
-            raise ValueError('file ' + file_name + ' does not exist')
-
         if ignore_conditions is None:
             ignore_conditions = \
                 SITE_DEFAULTS[Site.YAHOO].NBA_PLAYER_IGNORE_CONDITIONS

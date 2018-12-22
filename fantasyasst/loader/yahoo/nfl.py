@@ -24,12 +24,7 @@ class NflLoader(PlayerLoader):
         :param file_name: /path/to/file.csv
         :param ignore_conditions: conditions for which to ignore players
         :return: NflLoader instance
-        :raises ValueError: file_name does not exist
         """
-
-        if os.path.isfile(file_name) is False:
-            raise ValueError('file ' + file_name + ' does not exist')
-
         if ignore_conditions is None:
             ignore_conditions = \
                 SITE_DEFAULTS[Site.YAHOO].NFL_PLAYER_IGNORE_CONDITIONS
