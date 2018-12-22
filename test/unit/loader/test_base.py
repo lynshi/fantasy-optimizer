@@ -104,44 +104,44 @@ class TestPlayerLoader(unittest.TestCase):
         }
         self.assertDictEqual(correct, self.player_loader.get_player_dict())
 
-    # def test_import_csv_from_not_csv(self):
-    #     with patch('os.path.isfile') as mock_isfile:
-    #         mock_isfile.return_value = True
-    #         with patch('builtins.open',
-    #                    mock_open(read_data='Id,First Name,Last Name,Position,'
-    #                                        'Team,Opponent,Game,Time,Salary,'
-    #                                        'FPPG,Injury Status,Starting\n'
-    #                                        'nfl.p.27540,Odell,Beckham Jr.,WR,'
-    #                                        'NYG,IND,NYG@IND,1:00PM EST,26,16.0,'
-    #                                        'Q,No\n'
-    #                                        'nfl.p.30972,Saquon,Barkley,RB,NYG,'
-    #                                        'IND,NYG@IND,1:00PM EST,36,21.6,\" '
-    #                                        '\",No\n'
-    #                                        'nfl.p.6760,Eli,Manning,QB,NYG,IND,'
-    #                                        'NYG@IND,1:00PM EST,25,15.0,'
-    #                                        '\" \",No')):
-    #             self.assertRaises(ValueError,
-    #                               DfsOptimizer.import_csv, 'testcsv', 'Id',
-    #                               {'FPPG': np.float, 'Salary': np.int}, None,
-    #                               None, None)
-    #
-    # def import_csv_from_nonexistent_file(self):
-    #     with patch('os.path.isfile') as mock_isfile:
-    #         mock_isfile.return_value = False
-    #         with patch('builtins.open',
-    #                    mock_open(read_data='Id,First Name,Last Name,Position,'
-    #                                        'Team,Opponent,Game,Time,Salary,'
-    #                                        'FPPG,Injury Status,Starting\n'
-    #                                        'nfl.p.27540,Odell,Beckham Jr.,WR,'
-    #                                        'NYG,IND,NYG@IND,1:00PM EST,26,16.0,'
-    #                                        'Q,No\n'
-    #                                        'nfl.p.30972,Saquon,Barkley,RB,NYG,'
-    #                                        'IND,NYG@IND,1:00PM EST,36,21.6,\" '
-    #                                        '\",No\n'
-    #                                        'nfl.p.6760,Eli,Manning,QB,NYG,IND,'
-    #                                        'NYG@IND,1:00PM EST,25,15.0,'
-    #                                        '\" \",No')):
-    #             self.assertRaises(RuntimeError,
-    #                               DfsOptimizer.import_csv, 'test.csv', 'Id',
-    #                               {'FPPG': np.float, 'Salary': np.int}, None,
-    #                               None, None)
+    def test_import_csv_from_not_csv(self):
+        with patch('os.path.isfile') as mock_isfile:
+            mock_isfile.return_value = True
+            with patch('builtins.open',
+                       mock_open(read_data='Id,First Name,Last Name,Position,'
+                                           'Team,Opponent,Game,Time,Salary,'
+                                           'FPPG,Injury Status,Starting\n'
+                                           'nfl.p.27540,Odell,Beckham Jr.,WR,'
+                                           'NYG,IND,NYG@IND,1:00PM EST,26,16.0,'
+                                           'Q,No\n'
+                                           'nfl.p.30972,Saquon,Barkley,RB,NYG,'
+                                           'IND,NYG@IND,1:00PM EST,36,21.6,\" '
+                                           '\",No\n'
+                                           'nfl.p.6760,Eli,Manning,QB,NYG,IND,'
+                                           'NYG@IND,1:00PM EST,25,15.0,'
+                                           '\" \",No')):
+                self.assertRaises(ValueError,
+                                  PlayerLoader.import_csv, 'testcsv', 'Id',
+                                  {'FPPG': np.float, 'Salary': np.int}, None,
+                                  None, None)
+
+    def test_import_csv_from_nonexistent_file(self):
+        with patch('os.path.isfile') as mock_isfile:
+            mock_isfile.return_value = False
+            with patch('builtins.open',
+                       mock_open(read_data='Id,First Name,Last Name,Position,'
+                                           'Team,Opponent,Game,Time,Salary,'
+                                           'FPPG,Injury Status,Starting\n'
+                                           'nfl.p.27540,Odell,Beckham Jr.,WR,'
+                                           'NYG,IND,NYG@IND,1:00PM EST,26,16.0,'
+                                           'Q,No\n'
+                                           'nfl.p.30972,Saquon,Barkley,RB,NYG,'
+                                           'IND,NYG@IND,1:00PM EST,36,21.6,\" '
+                                           '\",No\n'
+                                           'nfl.p.6760,Eli,Manning,QB,NYG,IND,'
+                                           'NYG@IND,1:00PM EST,25,15.0,'
+                                           '\" \",No')):
+                self.assertRaises(RuntimeError,
+                                  PlayerLoader.import_csv, 'test.csv', 'Id',
+                                  {'FPPG': np.float, 'Salary': np.int}, None,
+                                  None, None)
