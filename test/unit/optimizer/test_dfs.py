@@ -496,3 +496,7 @@ class TestDfsOptimizer(unittest.TestCase):
                                   DfsOptimizer.import_csv, 'test.csv', 'Id',
                                   {'FPPG': np.float, 'Salary': np.int}, None,
                                   None, None)
+
+
+if __name__ == '__main__':
+    unittest.main()
