@@ -168,7 +168,7 @@ class DfsOptimizer:
 
             position_constraints[flex] = pulp.LpConstraint(
                 affine_expression, sense, flex,
-                requirement + non_flex_count[flex] + utility_requirement)
+                requirement + non_flex_count[flex])
 
     def add_utility_constraint(self, player_variables, position_constraints,
                                utility_requirement, non_utility_count):
