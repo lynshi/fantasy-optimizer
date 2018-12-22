@@ -7,7 +7,6 @@ from fantasyasst.optimizer.exceptions import OptimizerException
 
 class DfsOptimizer:
     UTILITY_CONSTRAINT = 'utility_constraint'
-    LB_SUFFIX = '_lb'
     IP_STATUS_STR = 'ip_solve_status'
     LINEUP_SALARY_STR = 'lineup_cost'
     LINEUP_POINTS_STR = 'lineup_points'
@@ -129,13 +128,11 @@ class DfsOptimizer:
                                          position])
 
             sense = pulp.LpConstraintEQ
-            modifier = ''
             if position in position_to_flex_map or utility_requirement > 0:
                 sense = pulp.LpConstraintGE
-                modifier = DfsOptimizer.LB_SUFFIX
 
-            position_constraints[position + modifier] = pulp.LpConstraint(
-                affine_expression, sense, position + modifier, requirement)
+            position_constraints[position] = pulp.LpConstraint(
+                affine_expression, sense, position, requirement)
 
         return non_flex_count
 
@@ -166,14 +163,12 @@ class DfsOptimizer:
                                          allowed])
 
             sense = pulp.LpConstraintEQ
-            modifier = ''
             if utility_requirement > 0:
                 sense = pulp.LpConstraintGE
-                modifier = DfsOptimizer.LB_SUFFIX
 
-            position_constraints[flex + modifier] = pulp.LpConstraint(
-                affine_expression, sense, flex + modifier,
-                requirement + non_flex_count[flex])
+            position_constraints[flex] = pulp.LpConstraint(
+                affine_expression, sense, flex,
+                requirement + non_flex_count[flex] + utility_requirement)
 
     def add_utility_constraint(self, player_variables, position_constraints,
                                utility_requirement, non_utility_count):

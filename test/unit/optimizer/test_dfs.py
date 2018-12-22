@@ -159,46 +159,40 @@ class TestDfsOptimizer(unittest.TestCase):
         for name, optimizer in self.optimizers.items():
             model = optimizer.model
             for position, requirement in self.positions.items():
-                constraint_name = position
                 sense = pulp.LpConstraintEQ
                 if self.W_UTILITY in name:
-                    constraint_name += DfsOptimizer.LB_SUFFIX
                     sense = pulp.LpConstraintGE
                 elif self.W_FLEX in name:
                     for flex, (allowed, req) in self.flex_positions.items():
                         if position in allowed:
-                            constraint_name += DfsOptimizer.LB_SUFFIX
                             sense = pulp.LpConstraintGE
                             break
 
-                self.assertIn(constraint_name, model.constraints,
-                              msg=name + ' failed for ' + constraint_name)
+                self.assertIn(position, model.constraints,
+                              msg=name + ' failed for ' + position)
 
-                constraint = model.constraints[constraint_name]
+                constraint = model.constraints[position]
                 self.assertEqual(sense, constraint.sense,
-                                 msg=name + ' failed for ' + constraint_name)
+                                 msg=name + ' failed for ' + position)
                 self.assertEqual(requirement, -constraint.constant,
-                                 msg=name + ' failed for ' + constraint_name)
+                                 msg=name + ' failed for ' + position)
 
                 terms = constraint.items()
                 variables_in_constraint = set()
                 for tup in terms:
                     self.assertIn(tup[0].name, self.players,
-                                  msg=name + ' failed for ' + constraint_name)
+                                  msg=name + ' failed for ' + position)
                     self.assertEqual(position,
                                      self.players[tup[0].name][Player.POSITION],
-                                     msg=name + ' failed for ' +
-                                         constraint_name)
+                                     msg=name + ' failed for ' + position)
                     self.assertEqual(1, tup[1],
-                                     msg=name + ' failed for ' +
-                                         constraint_name)
+                                     msg=name + ' failed for ' + position)
                     variables_in_constraint.add(tup[0].name)
 
                 for i, p in self.players.items():
                     if p[Player.POSITION] == position:
                         self.assertIn(i, variables_in_constraint,
-                                      msg=name + ' failed for ' +
-                                          constraint_name)
+                                      msg=name + ' failed for ' + position)
 
     def test_flex_requirement_lb_or_eq_constraint(self):
         for name, optimizer in self.optimizers.items():
@@ -207,44 +201,105 @@ class TestDfsOptimizer(unittest.TestCase):
 
             model = optimizer.model
             for flex, (allowed, requirement) in self.flex_positions.items():
-                constraint_name = flex
                 sense = pulp.LpConstraintEQ
                 buffer = 0
+                for a in allowed:
+                    buffer += self.positions[a]
                 if self.W_UTILITY in name:
-                    constraint_name += DfsOptimizer.LB_SUFFIX
                     sense = pulp.LpConstraintGE
-                    buffer = self.utility_requirement
+                    buffer += self.utility_requirement
 
-                self.assertIn(constraint_name, model.constraints,
-                              msg=name + ' failed for ' + constraint_name)
+                self.assertIn(flex, model.constraints,
+                              msg=name + ' failed for ' + flex)
 
-                constraint = model.constraints[constraint_name]
+                constraint = model.constraints[flex]
                 self.assertEqual(sense, constraint.sense,
-                                 msg=name + ' failed for ' + constraint_name)
+                                 msg=name + ' failed for ' + flex)
                 self.assertEqual(requirement + buffer, -constraint.constant,
-                                 msg=name + ' failed for ' + constraint_name)
+                                 msg=name + ' failed for ' + flex)
 
                 terms = constraint.items()
                 variables_in_constraint = set()
                 for tup in terms:
                     self.assertIn(tup[0].name, self.players,
-                                  msg=name + ' failed for ' + constraint_name)
+                                  msg=name + ' failed for ' + flex)
                     self.assertIn(self.players[tup[0].name][Player.POSITION],
-                                  allowed, msg=name + ' failed for ' +
-                                               constraint_name)
+                                  allowed, msg=name + ' failed for ' + flex)
                     self.assertEqual(1, tup[1],
-                                     msg=name + ' failed for ' +
-                                         constraint_name)
+                                     msg=name + ' failed for ' + flex)
                     variables_in_constraint.add(tup[0].name)
 
                 for i, p in self.players.items():
                     if p[Player.POSITION] in allowed:
                         self.assertIn(i, variables_in_constraint,
-                                      msg=name + ' failed for ' +
-                                          constraint_name)
+                                      msg=name + ' failed for ' + flex)
 
-    # def test_all_constraints_are_valid(self):
-    #     for name, optimizer in self.optimizers.items():
+    def test_utility_requirement_constraint(self):
+        for name, optimizer in self.optimizers.items():
+            if self.W_UTILITY not in name:
+                continue
+
+            model = optimizer.model
+            required = self.utility_requirement
+            for p, count in self.positions.items():
+                required += count
+            if self.W_FLEX in name:
+                for flex, (allowed, req) in self.flex_positions.items():
+                    required += req
+
+                self.assertIn(DfsOptimizer.UTILITY_CONSTRAINT,
+                              model.constraints)
+
+                constraint = model.constraints[DfsOptimizer.UTILITY_CONSTRAINT]
+                self.assertEqual(pulp.LpConstraintEQ, constraint.sense)
+                self.assertEqual(required, -constraint.constant)
+
+                terms = constraint.items()
+                variables_in_constraint = set()
+                for tup in terms:
+                    self.assertIn(tup[0].name, self.players)
+                    self.assertEqual(1, tup[1])
+                    variables_in_constraint.add(tup[0].name)
+
+                for i, p in self.players.items():
+                    self.assertIn(i, variables_in_constraint)
+
+    def test_budget_constraint(self):
+        for name, optimizer in self.optimizers.items():
+            model = optimizer.model
+            self.assertIn(DfsOptimizer.LINEUP_SALARY_STR, model.constraints)
+            constraint = model.constraints[DfsOptimizer.LINEUP_SALARY_STR]
+
+            self.assertEqual(pulp.LpConstraintLE, constraint.sense)
+            self.assertEqual(self.budget, -constraint.constant)
+
+            terms = constraint.items()
+            variables_in_constraint = set()
+            for tup in terms:
+                self.assertIn(tup[0].name, self.players)
+                self.assertEqual(self.players[tup[0].name][Player.SALARY],
+                                 tup[1])
+                variables_in_constraint.add(tup[0].name)
+
+            for i, p in self.players.items():
+                self.assertIn(i, variables_in_constraint)
+
+    def test_all_constraints_are_valid(self):
+        for name, optimizer in self.optimizers.items():
+            constraints = optimizer.model.constraints
+            allowed_constraints = {DfsOptimizer.LINEUP_SALARY_STR}
+            for pos in self.positions:
+                allowed_constraints.add(pos)
+
+            if self.W_FLEX in name:
+                for flex in self.flex_positions:
+                    allowed_constraints.add(flex)
+            if self.W_UTILITY in name:
+                allowed_constraints.add(DfsOptimizer.UTILITY_CONSTRAINT)
+
+            for constraint_name in constraints.keys():
+                self.assertIn(constraint_name, allowed_constraints)
+
 
     # def test_objective_construction(self):
     #     objective = self.dfs_optimizer.model.objective
