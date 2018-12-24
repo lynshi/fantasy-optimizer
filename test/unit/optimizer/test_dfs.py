@@ -19,55 +19,64 @@ class TestDfsOptimizer(unittest.TestCase):
                 Player.NAME: 'player_1',
                 Player.POINTS_PROJECTION: 25,
                 Player.POSITION: 'position_1',
-                Player.SALARY: 3
+                Player.SALARY: 3,
+                Player.TEAM: 'team_1'
             },
             'p2': {
                 Player.NAME: 'player_2',
                 Player.POINTS_PROJECTION: 30,
                 Player.POSITION: 'position_1',
-                Player.SALARY: 15
+                Player.SALARY: 15,
+                Player.TEAM: 'team_2'
             },
             'p3': {
                 Player.NAME: 'player_3',
                 Player.POINTS_PROJECTION: 4,
                 Player.POSITION: 'position_2',
-                Player.SALARY: 5
+                Player.SALARY: 5,
+                Player.TEAM: 'team_3'
             },
             'p4': {
                 Player.NAME: 'player_4',
                 Player.POINTS_PROJECTION: 2,
                 Player.POSITION: 'position_2',
-                Player.SALARY: 2
+                Player.SALARY: 2,
+                Player.TEAM: 'team_4'
             },
             'p5': {
                 Player.NAME: 'player_5',
                 Player.POINTS_PROJECTION: 30,
                 Player.POSITION: 'position_3',
-                Player.SALARY: 9
+                Player.SALARY: 9,
+                Player.TEAM: 'team_1'
             },
             'p6': {
                 Player.NAME: 'player_6',
                 Player.POINTS_PROJECTION: 1,
                 Player.POSITION: 'position_3',
-                Player.SALARY: 8
+                Player.SALARY: 8,
+                Player.TEAM: 'team_2'
             },
             'p7': {
                 Player.NAME: 'player_7',
                 Player.POINTS_PROJECTION: 25,
                 Player.POSITION: 'position_4',
-                Player.SALARY: 1
+                Player.SALARY: 1,
+                Player.TEAM: 'team_3'
             },
             'p8': {
                 Player.NAME: 'player_8',
                 Player.POINTS_PROJECTION: 25,
                 Player.POSITION: 'position_4',
-                Player.SALARY: 2
+                Player.SALARY: 2,
+                Player.TEAM: 'team_4'
             },
             'p9': {
                 Player.NAME: 'player_9',
                 Player.POINTS_PROJECTION: 3,
                 Player.POSITION: 'position_5',
-                Player.SALARY: 5
+                Player.SALARY: 5,
+                Player.TEAM: 'team_1'
             }
         }
 
@@ -416,6 +425,46 @@ class TestDfsOptimizer(unittest.TestCase):
             self.assertSetEqual(set(correct.keys()), set(lineup.keys()))
             for pos in correct:
                 self.assertCountEqual(correct[pos], lineup[pos])
+
+    def test_ignore_player_constraint(self):
+        for name, optimizer in self.optimizers.items():
+            for player, position, team in [('player_1', None, None),
+                                           ('player_1', 'position_1', None),
+                                           ('player_1', 'position_1',
+                                            'team_1')]:
+                optimizer.ignore_player(player_name=player,
+                                        player_position=position,
+                                        player_team=team)
+                model = optimizer.model
+                constraint_name = DfsOptimizer.IGNORE_PLAYER_PREFIX + player
+                if position is not None:
+                    constraint_name += position
+                if team is not None:
+                    constraint_name += team
+                self.assertIn(constraint_name, model.constraints)
+                constraint = model.constraints[constraint_name]
+                self.assertEqual(pulp.LpConstraintEQ, constraint.sense,
+                                 msg=name + ' failed for ' +
+                                 str((player, position, team)))
+                self.assertEqual(0, -constraint.constant,
+                                 msg=name + ' failed for ' +
+                                 str((player, position, team)))
+
+                terms = constraint.items()
+                variables_in_constraint = set()
+                for tup in terms:
+                    self.assertEqual('p1', tup[0].name,
+                                     msg=name + ' failed for ' +
+                                         str((player, position, team)))
+                    self.assertEqual(1, tup[1],
+                                     msg=name + ' failed for ' +
+                                         str((player, position, team)))
+                    variables_in_constraint.add(tup[0].name)
+
+                self.assertSetEqual({'p1'}, variables_in_constraint)
+                del model.constraints[constraint_name]
+
+                self.test_all_constraints_are_valid()
 
 
 if __name__ == '__main__':

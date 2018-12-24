@@ -12,6 +12,11 @@ class DfsOptimizer:
     LINEUP_POINTS = 'lineup_points'
     LINEUP_PLAYERS = 'lineup_players'
 
+    IGNORE_PLAYER_PREFIX = 'ignore_'
+    IGNORE_TEAM_PREFIX = 'ignore_'
+    TEAM_MAX_PREFIX = 'team_max_'
+    REQUIRE_PLAYER_PREFIX = 'require_'
+
     def __init__(self, players, positions, budget, flex_positions=None,
                  utility_requirement=0):
         """
@@ -32,7 +37,7 @@ class DfsOptimizer:
 
         for player, attributes in players.items():
             for attr in [Player.POSITION, Player.POINTS_PROJECTION,
-                         Player.SALARY]:
+                         Player.SALARY, Player.TEAM]:
                 if attr not in attributes.keys():
                     raise ValueError('player \'' + player + '\' is missing '
                                                             'required '
@@ -259,3 +264,52 @@ class DfsOptimizer:
             print(json.dumps(lineup, sort_keys=True, indent=4))
 
         return lineup
+
+    def ignore_player(self, player_name, player_position=None,
+                      player_team=None):
+        """
+        Ignore player named by player_name so that it is never used in a lineup.
+        The position and team of the player can be specified for further
+        granularity (e.g. in the case two players have the same name). All
+        players satisfying the given conditions are ignored.
+
+        :param player_name: name of the player; Player.NAME
+        :param player_position: position of the player; Player.POSITION
+        :param player_team: team of the player; Player.TEAM
+        :return: None
+        """
+        constraint_name = DfsOptimizer.IGNORE_PLAYER_PREFIX + player_name
+        player_variables = []
+        for var_id, var in self.model.variablesDict().items():
+            if self.players[var.name][Player.NAME] == player_name:
+                player_variables.append((var, 1))
+
+        if player_position is not None:
+            constraint_name += player_position
+            temp = []
+            for var, coefficient in player_variables:
+                if self.players[var.name][Player.POSITION] == player_position:
+                    temp.append((var, coefficient))
+            player_variables = temp
+
+        if player_team is not None:
+            constraint_name += player_team
+            temp = []
+            for var, coefficient in player_variables:
+                if self.players[var.name][Player.TEAM] == player_team:
+                    temp.append((var, coefficient))
+            player_variables = temp
+
+        affine_expression = pulp.LpAffineExpression(player_variables)
+        self.model.constraints[constraint_name] = pulp.LpConstraint(
+            affine_expression, pulp.LpConstraintEQ, constraint_name, 0)
+
+    def ignore_team(self, team_name):
+        pass
+
+    def set_max_players_from_team(self, team_name):
+        pass
+
+    def require_player(self, player_name, player_position=None,
+                       player_team=None):
+        pass
