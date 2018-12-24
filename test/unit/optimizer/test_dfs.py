@@ -522,44 +522,44 @@ class TestDfsOptimizer(unittest.TestCase):
 
                 self.test_all_constraints_are_valid()
 
-    def test_set_max_players_from_team(self):
+    def test_set_max_players_from_same_team(self):
         for name, optimizer in self.optimizers.items():
-            for team, maximum in [('team_1', 0), ('team_2', 1), ('team_3', 2),
-                                  ('team_4', 3)]:
-                optimizer.set_max_players_from_team(team, maximum)
+            for maximum in [1, 2, 3, 5]:
+                optimizer.set_max_players_from_same_team(maximum)
                 model = optimizer.model
-                constraint_name = DfsOptimizer.TEAM_MAX_PREFIX + team + \
-                                  str(maximum)
+                teams = set()
+                for p, attr in self.players.items():
+                    if attr[Player.TEAM] in teams:
+                        continue
+                    team = attr[Player.TEAM]
+                    teams.add(team)
+                    constraint_name = DfsOptimizer.TEAM_MAX_PREFIX + team
+                    self.assertIn(constraint_name, model.constraints,
+                                  msg=name + ' failed for ' + str(maximum))
+                    constraint = model.constraints[constraint_name]
+                    self.assertEqual(pulp.LpConstraintLE, constraint.sense,
+                                     msg=name + ' failed for ' + str(maximum))
+                    self.assertEqual(maximum, -constraint.constant,
+                                     msg=name + ' failed for ' + str(maximum))
 
-                self.assertIn(constraint_name, model.constraints,
-                              msg=name + ' failed for ' +
-                                  str((team, maximum)))
-                constraint = model.constraints[constraint_name]
-                self.assertEqual(pulp.LpConstraintLE, constraint.sense,
-                                 msg=name + ' failed for ' +
-                                 str((team, maximum)))
-                self.assertEqual(maximum, -constraint.constant,
-                                 msg=name + ' failed for ' +
-                                 str((team, maximum)))
+                    terms = constraint.items()
+                    variables_in_constraint = set()
+                    for tup in terms:
+                        self.assertEqual(self.players[tup[0].name][Player.TEAM],
+                                         team, msg=name + ' failed for ' +
+                                                   str(maximum))
+                        self.assertEqual(1, tup[1],
+                                         msg=name + ' failed for ' +
+                                             str(maximum))
+                        variables_in_constraint.add(tup[0].name)
 
-                terms = constraint.items()
-                variables_in_constraint = set()
-                for tup in terms:
-                    self.assertEqual(self.players[tup[0].name][Player.TEAM],
-                                     team, msg=name + ' failed for ' +
-                                               str((team, maximum)))
-                    self.assertEqual(1, tup[1],
-                                     msg=name + ' failed for ' +
-                                         str((team, maximum)))
-                    variables_in_constraint.add(tup[0].name)
-
-                for i, p in self.players.items():
-                    if p[Player.TEAM] == team:
-                        self.assertIn(i, variables_in_constraint,
-                                      msg=name + ' failed for ' +
-                                          str((team, maximum)))
-
-                del model.constraints[constraint_name]
+                    for i, player in self.players.items():
+                        if player[Player.TEAM] == team:
+                            self.assertIn(i, variables_in_constraint,
+                                          msg=name + ' failed for ' +
+                                              str(maximum))
+                for team in teams:
+                    del model.constraints[DfsOptimizer.TEAM_MAX_PREFIX + team]
                 self.test_all_constraints_are_valid()
 
     def test_ignore_team(self):
@@ -567,13 +567,12 @@ class TestDfsOptimizer(unittest.TestCase):
             for team in ['team_1', 'team_2', 'team_3', 'team_4']:
                 optimizer.ignore_team(team)
                 model = optimizer.model
-                constraint_name = DfsOptimizer.TEAM_MAX_PREFIX + team + \
-                                  str(0)
+                constraint_name = DfsOptimizer.IGNORE_PLAYER_PREFIX + team
 
                 self.assertIn(constraint_name, model.constraints,
                               msg=name + ' failed for ' + team)
                 constraint = model.constraints[constraint_name]
-                self.assertEqual(pulp.LpConstraintLE, constraint.sense,
+                self.assertEqual(pulp.LpConstraintEQ, constraint.sense,
                                  msg=name + ' failed for ' + team)
                 self.assertEqual(0, -constraint.constant,
                                  msg=name + ' failed for ' + team)

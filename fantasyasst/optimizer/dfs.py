@@ -311,19 +311,7 @@ class DfsOptimizer:
         :param team_name: name of the team to ignore
         :return: None
         """
-        self.set_max_players_from_team(team_name, 0)
-
-    def set_max_players_from_team(self, team_name, maximum):
-        """
-        Constrain the solver so that at most 'maximum' players from the given
-        team can be placed in the lineup.
-
-        :param team_name: name of the team to ignore
-        :param maximum: max number of players from team team_name allowed
-        :return: None
-        """
-        constraint_name = DfsOptimizer.TEAM_MAX_PREFIX + team_name + \
-                          str(maximum)
+        constraint_name = DfsOptimizer.IGNORE_PLAYER_PREFIX + team_name
         player_variables = []
         for var_id, var in self.model.variablesDict().items():
             if self.players[var.name][Player.TEAM] == team_name:
@@ -331,7 +319,30 @@ class DfsOptimizer:
 
         affine_expression = pulp.LpAffineExpression(player_variables)
         self.model.constraints[constraint_name] = pulp.LpConstraint(
-            affine_expression, pulp.LpConstraintLE, constraint_name, maximum)
+            affine_expression, pulp.LpConstraintEQ, constraint_name, 0)
+
+    def set_max_players_from_same_team(self, maximum):
+        """
+        Constrain the solver so that at most 'maximum' players from the same
+        team can be placed in the lineup.
+
+        :param maximum: max number of players from team team_name allowed
+        :return: None
+        """
+        team_expressions = {}
+        for var_id, var in self.model.variablesDict().items():
+            team = self.players[var.name][Player.TEAM]
+            if team not in team_expressions:
+                team_expressions[team] = pulp.LpAffineExpression(name=team, constant=0)
+                print(team_expressions)
+            team_expressions[team] = team_expressions[team] + var
+
+        team_constraints = {}
+        for team in team_expressions:
+            team_constraints[DfsOptimizer.TEAM_MAX_PREFIX + team] = \
+                pulp.LpConstraint(team_expressions[team], pulp.LpConstraintLE,
+                                  DfsOptimizer.TEAM_MAX_PREFIX + team, maximum)
+        self.model.constraints.update(team_constraints)
 
     def require_player(self, player_name, player_position=None,
                        player_team=None):
