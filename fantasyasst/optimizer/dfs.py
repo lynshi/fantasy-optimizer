@@ -13,7 +13,6 @@ class DfsOptimizer:
     LINEUP_PLAYERS = 'lineup_players'
 
     IGNORE_PLAYER_PREFIX = 'ignore_'
-    IGNORE_TEAM_PREFIX = 'ignore_'
     TEAM_MAX_PREFIX = 'team_max_'
     REQUIRE_PLAYER_PREFIX = 'require_'
 
@@ -268,10 +267,10 @@ class DfsOptimizer:
     def ignore_player(self, player_name, player_position=None,
                       player_team=None):
         """
-        Ignore player named by player_name so that it is never used in a lineup.
-        The position and team of the player can be specified for further
-        granularity (e.g. in the case two players have the same name). All
-        players satisfying the given conditions are ignored.
+        Ignore player named by player_name so that it is never used in the
+        lineup. The position and team of the player can be specified for
+        further granularity (e.g. in the case two players have the same name).
+        All players satisfying the given conditions are ignored.
 
         :param player_name: name of the player; Player.NAME
         :param player_position: position of the player; Player.POSITION
@@ -305,15 +304,39 @@ class DfsOptimizer:
             affine_expression, pulp.LpConstraintEQ, constraint_name, 0)
 
     def ignore_team(self, team_name):
-        pass
+        """
+        Constrain the solver so that no players from the given team can be
+        placed in the lineup.
 
-    def set_max_players_from_team(self, team_name):
-        pass
+        :param team_name: name of the team to ignore
+        :return: None
+        """
+        self.set_max_players_from_team(team_name, 0)
+
+    def set_max_players_from_team(self, team_name, maximum):
+        """
+        Constrain the solver so that at most 'maximum' players from the given
+        team can be placed in the lineup.
+
+        :param team_name: name of the team to ignore
+        :param maximum: max number of players from team team_name allowed
+        :return: None
+        """
+        constraint_name = DfsOptimizer.TEAM_MAX_PREFIX + team_name + \
+                          str(maximum)
+        player_variables = []
+        for var_id, var in self.model.variablesDict().items():
+            if self.players[var.name][Player.TEAM] == team_name:
+                player_variables.append((var, 1))
+
+        affine_expression = pulp.LpAffineExpression(player_variables)
+        self.model.constraints[constraint_name] = pulp.LpConstraint(
+            affine_expression, pulp.LpConstraintLE, constraint_name, maximum)
 
     def require_player(self, player_name, player_position=None,
                        player_team=None):
         """
-        Requires player named by player_name so that it is always used in a
+        Requires player named by player_name so that it is always used in the
         lineup. he position and team of the player can be specified for further
         granularity (e.g. in the case two players have the same name). If many
         players satisfy the given condition, exactly one is allowed to be
