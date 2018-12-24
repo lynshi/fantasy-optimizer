@@ -122,19 +122,30 @@ class TestDfsOptimizer(unittest.TestCase):
             self.assertRaises(ValueError,
                               DfsOptimizer,
                               {'p1': {Player.SALARY: 1,
-                                      Player.POINTS_PROJECTION: 1}},
+                                      Player.POINTS_PROJECTION: 1,
+                                      Player.TEAM: 't_1'}},
                               self.positions,
                               10, flex, util)
             self.assertRaises(ValueError,
                               DfsOptimizer,
                               {'p1': {Player.POSITION: 'pos_1',
-                                      Player.POINTS_PROJECTION: 1}},
+                                      Player.POINTS_PROJECTION: 1,
+                                      Player.TEAM: 't_1'}},
                               self.positions,
                               10, flex, util)
             self.assertRaises(ValueError,
                               DfsOptimizer,
                               {'p1': {Player.POSITION: 'pos_1',
-                                      Player.SALARY: 1}},
+                                      Player.SALARY: 1,
+                                      Player.POINTS_PROJECTION: 1}},
+                              self.positions,
+                              10, flex, util)
+
+            self.assertRaises(ValueError,
+                              DfsOptimizer,
+                              {'p1': {Player.SALARY: 1,
+                                      Player.POSITION: 'pos_1',
+                                      Player.TEAM: 't_1'}},
                               self.positions,
                               10, flex, util)
 
@@ -396,7 +407,8 @@ class TestDfsOptimizer(unittest.TestCase):
     def test_infeasible_result(self):
         optimizer = DfsOptimizer({'p1': {Player.POSITION: 'position_1',
                                          Player.SALARY: 1,
-                                         Player.POINTS_PROJECTION: 25}},
+                                         Player.POINTS_PROJECTION: 25,
+                                         Player.TEAM: 'team_1'}},
                                  self.positions, 10)
         self.assertRaises(OptimizerException, optimizer.optimize)
 
