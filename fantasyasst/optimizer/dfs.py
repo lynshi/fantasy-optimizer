@@ -312,4 +312,41 @@ class DfsOptimizer:
 
     def require_player(self, player_name, player_position=None,
                        player_team=None):
-        pass
+        """
+        Requires player named by player_name so that it is always used in a
+        lineup. he position and team of the player can be specified for further
+        granularity (e.g. in the case two players have the same name). If many
+        players satisfy the given condition, exactly one is allowed to be
+        chosen.
+
+        :param player_name: name of the player; Player.NAME
+        :param player_position: position of the player; Player.POSITION
+        :param player_team: team of the player; Player.TEAM
+        :return: None
+        """
+
+        constraint_name = DfsOptimizer.REQUIRE_PLAYER_PREFIX + player_name
+        player_variables = []
+        for var_id, var in self.model.variablesDict().items():
+            if self.players[var.name][Player.NAME] == player_name:
+                player_variables.append((var, 1))
+
+        if player_position is not None:
+            constraint_name += player_position
+            temp = []
+            for var, coefficient in player_variables:
+                if self.players[var.name][Player.POSITION] == player_position:
+                    temp.append((var, coefficient))
+            player_variables = temp
+
+        if player_team is not None:
+            constraint_name += player_team
+            temp = []
+            for var, coefficient in player_variables:
+                if self.players[var.name][Player.TEAM] == player_team:
+                    temp.append((var, coefficient))
+            player_variables = temp
+
+        affine_expression = pulp.LpAffineExpression(player_variables)
+        self.model.constraints[constraint_name] = pulp.LpConstraint(
+            affine_expression, pulp.LpConstraintEQ, constraint_name, 1)

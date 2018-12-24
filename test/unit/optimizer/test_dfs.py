@@ -466,6 +466,46 @@ class TestDfsOptimizer(unittest.TestCase):
 
                 self.test_all_constraints_are_valid()
 
+    def test_require_player_constraint(self):
+        for name, optimizer in self.optimizers.items():
+            for player, position, team in [('player_1', None, None),
+                                           ('player_1', 'position_1', None),
+                                           ('player_1', 'position_1',
+                                            'team_1')]:
+                optimizer.require_player(player_name=player,
+                                         player_position=position,
+                                         player_team=team)
+                model = optimizer.model
+                constraint_name = DfsOptimizer.REQUIRE_PLAYER_PREFIX + player
+                if position is not None:
+                    constraint_name += position
+                if team is not None:
+                    constraint_name += team
+                self.assertIn(constraint_name, model.constraints)
+                constraint = model.constraints[constraint_name]
+                self.assertEqual(pulp.LpConstraintEQ, constraint.sense,
+                                 msg=name + ' failed for ' +
+                                 str((player, position, team)))
+                self.assertEqual(1, -constraint.constant,
+                                 msg=name + ' failed for ' +
+                                 str((player, position, team)))
+
+                terms = constraint.items()
+                variables_in_constraint = set()
+                for tup in terms:
+                    self.assertEqual('p1', tup[0].name,
+                                     msg=name + ' failed for ' +
+                                         str((player, position, team)))
+                    self.assertEqual(1, tup[1],
+                                     msg=name + ' failed for ' +
+                                         str((player, position, team)))
+                    variables_in_constraint.add(tup[0].name)
+
+                self.assertSetEqual({'p1'}, variables_in_constraint)
+                del model.constraints[constraint_name]
+
+                self.test_all_constraints_are_valid()
+
 
 if __name__ == '__main__':
     unittest.main()
