@@ -23,7 +23,6 @@ def optimize_lineup(site, csv_location):
                     'If multiple players,'
                     ' use a comma-separated list\n\t'
                     '(e.g. Patrick Mahomes,Saquon Barkley): ')
-    players += 'George Kittle'
     if players != '':
         for p in players.split(','):
             optimizer.require_player(p)
@@ -32,17 +31,18 @@ def optimize_lineup(site, csv_location):
                     'If multiple players,'
                     ' use a comma-separated list\n\t'
                     '(e.g. Nathan Peterman,Steven Ridley): ')
-    players += 'Ryan Fitzpatrick,Stevan Ridley,Kirk Cousins,' \
-               'Charcandrick West,Ted Ginn Jr.,Mitchell Trubisky,' \
-               'C.J. Beathard,Allen Robinson II,Matt Barkley,' \
-               'Josh Johnson,John Brown,Adrian Peterson'
     if players != '':
         for p in players.split(','):
             optimizer.ignore_player(p)
 
+    teams = input('Enter opponents to avoid.\n\tIf multiple teams,'
+                  ' use a comma-separated list\n\t(e.g. NYG,LAR): ')
+    if teams != '':
+        for t in teams.split(','):
+            optimizer.ignore_team(t)
+
     teams = input('Enter teams to ignore.\n\tIf multiple teams,'
                   ' use a comma-separated list\n\t(e.g. TB,MIA): ')
-    teams += 'JAX,CAR,MIA,MIN,CLE,NYG,PHI'
     if teams != '':
         for t in teams.split(','):
             optimizer.ignore_team(t)
