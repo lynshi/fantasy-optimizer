@@ -19,25 +19,39 @@ def optimize_lineup(site, csv_location):
                              SITE_DEFAULTS[site].NFL_FLEX_POSITIONS,
                              SITE_DEFAULTS[site].NFL_UTILITY_POSITIONS)
 
+    players = input('Enter players to require [First Last].\n\t'
+                    'If multiple players,'
+                    ' use a comma-separated list\n\t'
+                    '(e.g. Patrick Mahomes,Saquon Barkley): ')
+    players += 'George Kittle'
+    if players != '':
+        for p in players.split(','):
+            optimizer.require_player(p)
+
     players = input('Enter players to ignore [First Last].\n\t'
                     'If multiple players,'
                     ' use a comma-separated list\n\t'
                     '(e.g. Nathan Peterman,Steven Ridley): ')
+    players += 'Ryan Fitzpatrick,Stevan Ridley,Kirk Cousins,' \
+               'Charcandrick West,Ted Ginn Jr.,Mitchell Trubisky,' \
+               'C.J. Beathard,Allen Robinson II,Matt Barkley,' \
+               'Josh Johnson,John Brown,Adrian Peterson'
     if players != '':
         for p in players.split(','):
             optimizer.ignore_player(p)
 
     teams = input('Enter teams to ignore.\n\tIf multiple teams,'
                   ' use a comma-separated list\n\t(e.g. TB,MIA): ')
+    teams += 'JAX,CAR,MIA,MIN,CLE,NYG,PHI'
     if teams != '':
         for t in teams.split(','):
             optimizer.ignore_team(t)
 
-    maximum = int(input('Enter the maximum allowed number of players '
-                        'allowed from a team.\n\t'
-                        'If no preference, enter -1: '))
-    if maximum != -1:
-        optimizer.set_max_players_from_same_team(maximum)
+    maximum = input('Enter the maximum allowed number of players '
+                    'allowed from a team.\n\t'
+                    'If no preference, enter nothing: ')
+    if maximum != '':
+        optimizer.set_max_players_from_same_team(str(maximum))
 
     optimizer.generate_lineup()
 

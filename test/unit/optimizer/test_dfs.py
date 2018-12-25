@@ -20,63 +20,90 @@ class TestDfsOptimizer(unittest.TestCase):
                 Player.POINTS_PROJECTION: 25,
                 Player.POSITION: 'position_1',
                 Player.SALARY: 3,
-                Player.TEAM: 'team_1'
+                Player.TEAM: 'team_1',
+                Player.OPPONENT: 'team_4',
+                Player.INJURY_STATUS: 'I',
+                Player.GAME_TIME: '1'
             },
             'p2': {
                 Player.NAME: 'player_2',
                 Player.POINTS_PROJECTION: 30,
                 Player.POSITION: 'position_1',
                 Player.SALARY: 15,
-                Player.TEAM: 'team_2'
+                Player.TEAM: 'team_2',
+                Player.OPPONENT: 'team_3',
+                Player.INJURY_STATUS: 'H',
+                Player.GAME_TIME: '2'
             },
             'p3': {
                 Player.NAME: 'player_3',
                 Player.POINTS_PROJECTION: 4,
                 Player.POSITION: 'position_2',
                 Player.SALARY: 5,
-                Player.TEAM: 'team_3'
+                Player.TEAM: 'team_3',
+                Player.OPPONENT: 'team_2',
+                Player.INJURY_STATUS: 'G',
+                Player.GAME_TIME: '2'
             },
             'p4': {
                 Player.NAME: 'player_4',
                 Player.POINTS_PROJECTION: 2,
                 Player.POSITION: 'position_2',
                 Player.SALARY: 2,
-                Player.TEAM: 'team_4'
+                Player.TEAM: 'team_4',
+                Player.OPPONENT: 'team_1',
+                Player.INJURY_STATUS: 'F',
+                Player.GAME_TIME: '1'
             },
             'p5': {
                 Player.NAME: 'player_5',
                 Player.POINTS_PROJECTION: 30,
                 Player.POSITION: 'position_3',
                 Player.SALARY: 9,
-                Player.TEAM: 'team_1'
+                Player.TEAM: 'team_1',
+                Player.OPPONENT: 'team_4',
+                Player.INJURY_STATUS: 'E',
+                Player.GAME_TIME: '1'
             },
             'p6': {
                 Player.NAME: 'player_6',
                 Player.POINTS_PROJECTION: 1,
                 Player.POSITION: 'position_3',
                 Player.SALARY: 8,
-                Player.TEAM: 'team_2'
+                Player.TEAM: 'team_2',
+                Player.OPPONENT: 'team_3',
+                Player.INJURY_STATUS: 'D',
+                Player.GAME_TIME: '2'
             },
             'p7': {
                 Player.NAME: 'player_7',
                 Player.POINTS_PROJECTION: 25,
                 Player.POSITION: 'position_4',
                 Player.SALARY: 1,
-                Player.TEAM: 'team_3'
+                Player.TEAM: 'team_3',
+                Player.OPPONENT: 'team_2',
+                Player.INJURY_STATUS: 'C',
+                Player.GAME_TIME: '2'
             },
             'p8': {
                 Player.NAME: 'player_8',
                 Player.POINTS_PROJECTION: 25,
                 Player.POSITION: 'position_4',
                 Player.SALARY: 2,
-                Player.TEAM: 'team_4'
+                Player.TEAM: 'team_4',
+                Player.OPPONENT: 'team_1',
+                Player.INJURY_STATUS: 'B',
+                Player.GAME_TIME: '1'
             },
             'p9': {
                 Player.NAME: 'player_9',
                 Player.POINTS_PROJECTION: 3,
                 Player.POSITION: 'position_5',
                 Player.SALARY: 5,
-                Player.TEAM: 'team_1'
+                Player.TEAM: 'team_1',
+                Player.OPPONENT: 'team_4',
+                Player.INJURY_STATUS: 'A',
+                Player.GAME_TIME: '1'
             }
         }
 
@@ -116,38 +143,22 @@ class TestDfsOptimizer(unittest.TestCase):
         }
 
     def test_player_missing_attributes_exception(self):
-        for flex, util in [(None, None), (None, self.utility_requirement),
+        for flex, util in [(None, 0), (None, self.utility_requirement),
                            (self.flex_positions, None),
                            (self.flex_positions, self.utility_requirement)]:
-            self.assertRaises(ValueError,
-                              DfsOptimizer,
-                              {'p1': {Player.SALARY: 1,
-                                      Player.POINTS_PROJECTION: 1,
-                                      Player.TEAM: 't_1'}},
-                              self.positions,
-                              10, flex, util)
-            self.assertRaises(ValueError,
-                              DfsOptimizer,
-                              {'p1': {Player.POSITION: 'pos_1',
-                                      Player.POINTS_PROJECTION: 1,
-                                      Player.TEAM: 't_1'}},
-                              self.positions,
-                              10, flex, util)
-            self.assertRaises(ValueError,
-                              DfsOptimizer,
-                              {'p1': {Player.POSITION: 'pos_1',
-                                      Player.SALARY: 1,
-                                      Player.POINTS_PROJECTION: 1}},
-                              self.positions,
-                              10, flex, util)
+            attributes = [Player.NAME, Player.POINTS_PROJECTION,
+                          Player.OPPONENT, Player.GAME_TIME, Player.SALARY,
+                          Player.INJURY_STATUS, Player.TEAM]
+            for i in range(len(attributes)):
+                d = deepcopy(self.players)
+                for key, p in d.items():
+                    for j in range(len(attributes)):
+                        if i == j:
+                            del p[attributes[j]]
+                            break
 
-            self.assertRaises(ValueError,
-                              DfsOptimizer,
-                              {'p1': {Player.SALARY: 1,
-                                      Player.POSITION: 'pos_1',
-                                      Player.TEAM: 't_1'}},
-                              self.positions,
-                              10, flex, util)
+                self.assertRaises(ValueError, DfsOptimizer, d, self.positions,
+                                  10, flex, util)
 
     def test_player_dict_copy(self):
         for name, optimizer in self.optimizers.items():

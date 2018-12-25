@@ -35,8 +35,9 @@ class DfsOptimizer:
         """
 
         for player, attributes in players.items():
-            for attr in [Player.POSITION, Player.POINTS_PROJECTION,
-                         Player.SALARY, Player.TEAM]:
+            for attr in [Player.NAME, Player.POINTS_PROJECTION,
+                         Player.OPPONENT, Player.GAME_TIME, Player.SALARY,
+                         Player.INJURY_STATUS, Player.TEAM, Player.POSITION]:
                 if attr not in attributes.keys():
                     raise ValueError('player \'' + player + '\' is missing '
                                                             'required '
@@ -333,6 +334,9 @@ class DfsOptimizer:
         affine_expression = pulp.LpAffineExpression(player_variables)
         self.model.constraints[constraint_name] = pulp.LpConstraint(
             affine_expression, pulp.LpConstraintEQ, constraint_name, 0)
+
+    def avoid_matchup(self):
+        pass
 
     def set_max_players_from_same_team(self, maximum):
         """
