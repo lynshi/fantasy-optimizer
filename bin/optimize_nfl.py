@@ -39,7 +39,7 @@ def optimize_lineup(site, csv_location):
                   ' use a comma-separated list\n\t(e.g. NYG,LAR): ')
     if teams != '':
         for t in teams.split(','):
-            optimizer.ignore_team(t)
+            optimizer.avoid_opponent(t)
 
     teams = input('Enter teams to ignore.\n\tIf multiple teams,'
                   ' use a comma-separated list\n\t(e.g. TB,MIA): ')
