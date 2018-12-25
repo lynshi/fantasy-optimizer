@@ -438,6 +438,16 @@ class TestDfsOptimizer(unittest.TestCase):
             for pos in correct:
                 self.assertCountEqual(correct[pos], lineup[pos])
 
+    def test_ignore_nonexistent_player(self):
+        for name, optimizer in self.optimizers.items():
+            for player, position, team in [('player_10', None, None),
+                                           ('player_1', 'position_5', None),
+                                           ('player_1', 'position_1',
+                                            'team_5')]:
+                self.assertRaises(RuntimeError, optimizer.ignore_player,
+                                  player, position, team)
+                self.test_all_constraints_are_valid()
+
     def test_ignore_player(self):
         for name, optimizer in self.optimizers.items():
             for player, position, team in [('player_1', None, None),
@@ -478,6 +488,16 @@ class TestDfsOptimizer(unittest.TestCase):
                 self.assertSetEqual({'p1'}, variables_in_constraint)
                 del model.constraints[constraint_name]
 
+                self.test_all_constraints_are_valid()
+
+    def test_require_nonexistent_player(self):
+        for name, optimizer in self.optimizers.items():
+            for player, position, team in [('player_10', None, None),
+                                           ('player_1', 'position_5', None),
+                                           ('player_1', 'position_1',
+                                            'team_5')]:
+                self.assertRaises(RuntimeError, optimizer.require_player,
+                                  player, position, team)
                 self.test_all_constraints_are_valid()
 
     def test_require_player(self):
@@ -561,6 +581,11 @@ class TestDfsOptimizer(unittest.TestCase):
                 for team in teams:
                     del model.constraints[DfsOptimizer.TEAM_MAX_PREFIX + team]
                 self.test_all_constraints_are_valid()
+
+    def test_ignore_nonexistent_team(self):
+        for name, optimizer in self.optimizers.items():
+            self.assertRaises(RuntimeError, optimizer.ignore_team, 'team_5')
+            self.test_all_constraints_are_valid()
 
     def test_ignore_team(self):
         for name, optimizer in self.optimizers.items():

@@ -276,6 +276,7 @@ class DfsOptimizer:
         :param player_position: position of the player; Player.POSITION
         :param player_team: team of the player; Player.TEAM
         :return: None
+        :raises RuntimeError: if no player with the given conditions is found
         """
         constraint_name = DfsOptimizer.IGNORE_PLAYER_PREFIX + player_name
         player_variables = []
@@ -299,6 +300,14 @@ class DfsOptimizer:
                     temp.append((var, coefficient))
             player_variables = temp
 
+        if len(player_variables) == 0:
+            error_msg = 'No player named ' + player_name
+            if player_position is not None:
+                error_msg += ' (' + player_position + ')'
+            if player_team is not None:
+                error_msg += ' on ' + player_team
+            raise RuntimeError(error_msg + ' found')
+
         affine_expression = pulp.LpAffineExpression(player_variables)
         self.model.constraints[constraint_name] = pulp.LpConstraint(
             affine_expression, pulp.LpConstraintEQ, constraint_name, 0)
@@ -310,12 +319,16 @@ class DfsOptimizer:
 
         :param team_name: name of the team to ignore
         :return: None
+        :raises RuntimeError: if no team with the given name is found
         """
         constraint_name = DfsOptimizer.IGNORE_PLAYER_PREFIX + team_name
         player_variables = []
         for var_id, var in self.model.variablesDict().items():
             if self.players[var.name][Player.TEAM] == team_name:
                 player_variables.append((var, 1))
+
+        if len(player_variables) == 0:
+            raise RuntimeError('No players on ' + team_name + ' found')
 
         affine_expression = pulp.LpAffineExpression(player_variables)
         self.model.constraints[constraint_name] = pulp.LpConstraint(
@@ -357,6 +370,7 @@ class DfsOptimizer:
         :param player_position: position of the player; Player.POSITION
         :param player_team: team of the player; Player.TEAM
         :return: None
+        :raises RuntimeError: if no player with the given conditions is found
         """
 
         constraint_name = DfsOptimizer.REQUIRE_PLAYER_PREFIX + player_name
@@ -380,6 +394,14 @@ class DfsOptimizer:
                 if self.players[var.name][Player.TEAM] == player_team:
                     temp.append((var, coefficient))
             player_variables = temp
+
+        if len(player_variables) == 0:
+            error_msg = 'No player named ' + player_name
+            if player_position is not None:
+                error_msg += ' (' + player_position + ')'
+            if player_team is not None:
+                error_msg += ' on ' + player_team
+            raise RuntimeError(error_msg + ' found')
 
         affine_expression = pulp.LpAffineExpression(player_variables)
         self.model.constraints[constraint_name] = pulp.LpConstraint(
