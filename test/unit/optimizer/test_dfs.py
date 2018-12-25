@@ -416,10 +416,7 @@ class TestDfsOptimizer(unittest.TestCase):
         self.assertDictEqual(correct, result)
 
     def test_infeasible_result(self):
-        optimizer = DfsOptimizer({'p1': {Player.POSITION: 'position_1',
-                                         Player.SALARY: 1,
-                                         Player.POINTS_PROJECTION: 25,
-                                         Player.TEAM: 'team_1'}},
+        optimizer = DfsOptimizer({'p1': self.players['p1']},
                                  self.positions, 10)
         self.assertRaises(OptimizerException, optimizer.optimize)
 
