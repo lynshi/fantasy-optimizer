@@ -630,6 +630,43 @@ class TestDfsOptimizer(unittest.TestCase):
                 del model.constraints[constraint_name]
                 self.test_all_constraints_are_valid()
 
+    def test_avoid_nonexistent_opponent(self):
+        for name, optimizer in self.optimizers.items():
+            self.assertRaises(RuntimeError, optimizer.avoid_opponent, 'team_5')
+            self.test_all_constraints_are_valid()
+
+    def test_avoid_opponent(self):
+        for name, optimizer in self.optimizers.items():
+            for team in ['team_1', 'team_2', 'team_3', 'team_4']:
+                optimizer.avoid_opponent(team)
+                model = optimizer.model
+                constraint_name = DfsOptimizer.AVOID_OPPONENT_PREFIX + team
+
+                self.assertIn(constraint_name, model.constraints,
+                              msg=name + ' failed for ' + team)
+                constraint = model.constraints[constraint_name]
+                self.assertEqual(pulp.LpConstraintEQ, constraint.sense,
+                                 msg=name + ' failed for ' + team)
+                self.assertEqual(0, -constraint.constant,
+                                 msg=name + ' failed for ' + team)
+
+                terms = constraint.items()
+                variables_in_constraint = set()
+                for tup in terms:
+                    self.assertEqual(self.players[tup[0].name][Player.OPPONENT],
+                                     team, msg=name + ' failed for ' + team)
+                    self.assertEqual(1, tup[1],
+                                     msg=name + ' failed for ' + team)
+                    variables_in_constraint.add(tup[0].name)
+
+                for i, p in self.players.items():
+                    if p[Player.OPPONENT] == team:
+                        self.assertIn(i, variables_in_constraint,
+                                      msg=name + ' failed for ' + team)
+
+                del model.constraints[constraint_name]
+                self.test_all_constraints_are_valid()
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -15,6 +15,7 @@ class DfsOptimizer:
     IGNORE_PLAYER_PREFIX = 'ignore_'
     TEAM_MAX_PREFIX = 'team_max_'
     REQUIRE_PLAYER_PREFIX = 'require_'
+    AVOID_OPPONENT_PREFIX = 'avoid_opponent_'
 
     def __init__(self, players, positions, budget, flex_positions=None,
                  utility_requirement=0):
@@ -335,8 +336,28 @@ class DfsOptimizer:
         self.model.constraints[constraint_name] = pulp.LpConstraint(
             affine_expression, pulp.LpConstraintEQ, constraint_name, 0)
 
-    def avoid_matchup(self):
-        pass
+    def avoid_opponent(self, team_name):
+        """
+        Constrain the solver so that no players playing against team_name
+        are selected for the lineup
+
+        :param team_name: name of the opponent to avoid
+        :return: None
+        :raises RuntimeError: if no team with the given name is found
+        """
+        constraint_name = DfsOptimizer.AVOID_OPPONENT_PREFIX + team_name
+        player_variables = []
+        for var_id, var in self.model.variablesDict().items():
+            if self.players[var.name][Player.OPPONENT] == team_name:
+                player_variables.append((var, 1))
+
+        if len(player_variables) == 0:
+            raise RuntimeError('No players playing against ' + team_name +
+                               ' found')
+
+        affine_expression = pulp.LpAffineExpression(player_variables)
+        self.model.constraints[constraint_name] = pulp.LpConstraint(
+            affine_expression, pulp.LpConstraintEQ, constraint_name, 0)
 
     def set_max_players_from_same_team(self, maximum):
         """
