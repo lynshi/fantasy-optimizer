@@ -372,7 +372,6 @@ class DfsOptimizer:
             team = self.players[var.name][Player.TEAM]
             if team not in team_expressions:
                 team_expressions[team] = pulp.LpAffineExpression(name=team, constant=0)
-                print(team_expressions)
             team_expressions[team] = team_expressions[team] + var
 
         team_constraints = {}
