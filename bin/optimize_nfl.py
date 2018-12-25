@@ -51,7 +51,7 @@ def optimize_lineup(site, csv_location):
                     'allowed from a team.\n\t'
                     'If no preference, enter nothing: ')
     if maximum != '':
-        optimizer.set_max_players_from_same_team(str(maximum))
+        optimizer.set_max_players_from_same_team(int(maximum))
 
     optimizer.generate_lineup()
 
