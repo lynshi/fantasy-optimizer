@@ -421,10 +421,10 @@ class TestDfsOptimizer(unittest.TestCase):
         self.assertRaises(OptimizerException, optimizer.optimize)
 
     def test_generate_lineup(self):
-        for key in [Player.OPPONENT, Player.GAME_TIME, Player.INJURY_STATUS,
-                    Player.TEAM]:
+        for idx, key in enumerate([Player.OPPONENT, Player.GAME_TIME,
+                              Player.INJURY_STATUS, Player.TEAM]):
             for i, p in enumerate(self.players.keys()):
-                self.players[p][key] = key * i
+                self.players[p][key] = idx * i
 
         players = deepcopy(self.players)
         for p in players:

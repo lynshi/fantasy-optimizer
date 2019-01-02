@@ -1,4 +1,7 @@
-class Player:
+from enum import Enum
+
+
+class Player(Enum):
     NAME = 'Name'
     POINTS_PROJECTION = 'Points_Projection'
     GAME_TIME = 'Game_Time'

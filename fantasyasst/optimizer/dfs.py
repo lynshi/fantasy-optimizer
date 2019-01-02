@@ -43,7 +43,7 @@ class DfsOptimizer:
                     raise ValueError('player \'' + player + '\' is missing '
                                                             'required '
                                                             'attribute \'' +
-                                     attr + '\'')
+                                     str(attr) + '\'')
 
         self.players = players
 

@@ -1,7 +1,8 @@
+from enum import Enum
 from fantasyasst.player import Player
 
 
-class Site:
+class Site(Enum):
     YAHOO = 'Yahoo'
 
 
