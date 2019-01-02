@@ -18,7 +18,7 @@ class Statistics:
         """
         self.league = league
         self.client = datastore.Client.from_service_account_json(
-            '../.api_credentials/gcloud-datastore.json'
+            'gcloud-datastore.json'
         )
 
     @property
