@@ -1,4 +1,5 @@
 from google.cloud import datastore
+import typing
 
 from fantasyasst import *
 
@@ -25,7 +26,17 @@ class Statistics:
     def _league(self):
         return self.league.value
 
-    def get_team_statistics(self, team, season, game, n_games_back, weight):
+    def get_team_statistics(self, team, season, game, n_games_back) \
+            -> typing.List[datastore.Entity]:
+        """
+        Gather team statistics for the last 'n_games_back' games
+
+        :param team: name of team to get statistics for
+        :param season: season of current game
+        :param game: game number of current game
+        :param n_games_back: number of previous games to get data for
+        :return: list of Entities
+        """
         query = self.client.query(kind=str(season),
                                   ancestor=self.client.key(self._league, team))
         if game - n_games_back < 1:

@@ -26,6 +26,6 @@ class TestStatistics(unittest.TestCase):
 
     def test_get_team_statistics(self):
         stats = self.fetchers[League.NBA].get_team_statistics(
-            'CHI', 2018, 82, 5, 1
+            'CHI', 2018, 82, 5
         )
-        print(stats)
+        print(stats[0])
