@@ -422,7 +422,7 @@ class TestDfsOptimizer(unittest.TestCase):
 
     def test_generate_lineup(self):
         for idx, key in enumerate([Player.OPPONENT, Player.GAME_TIME,
-                              Player.INJURY_STATUS, Player.TEAM]):
+                                   Player.INJURY_STATUS, Player.TEAM]):
             for i, p in enumerate(self.players.keys()):
                 self.players[p][key] = idx * i
 
@@ -477,10 +477,10 @@ class TestDfsOptimizer(unittest.TestCase):
                 constraint = model.constraints[constraint_name]
                 self.assertEqual(pulp.LpConstraintEQ, constraint.sense,
                                  msg=name + ' failed for ' +
-                                 str((player, position, team)))
+                                     str((player, position, team)))
                 self.assertEqual(0, -constraint.constant,
                                  msg=name + ' failed for ' +
-                                 str((player, position, team)))
+                                     str((player, position, team)))
 
                 terms = constraint.items()
                 variables_in_constraint = set()
@@ -529,10 +529,10 @@ class TestDfsOptimizer(unittest.TestCase):
                 constraint = model.constraints[constraint_name]
                 self.assertEqual(pulp.LpConstraintEQ, constraint.sense,
                                  msg=name + ' failed for ' +
-                                 str((player, position, team)))
+                                     str((player, position, team)))
                 self.assertEqual(1, -constraint.constant,
                                  msg=name + ' failed for ' +
-                                 str((player, position, team)))
+                                     str((player, position, team)))
 
                 terms = constraint.items()
                 variables_in_constraint = set()

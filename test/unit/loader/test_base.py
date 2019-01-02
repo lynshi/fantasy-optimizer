@@ -35,7 +35,7 @@ class TestPlayerLoader(unittest.TestCase):
                     return row['Last Name'] + ' ' + row['First Name']
 
                 apply_functions = [(Player.NAME, make_name),
-                                   (str(Player.NAME)[::-1],
+                                   (Player.NAME[::-1],
                                     make_name_backwards)]
 
                 column_renames = {
@@ -70,7 +70,7 @@ class TestPlayerLoader(unittest.TestCase):
                 Player.INJURY_STATUS: "Q",
                 "Starting": "No",
                 Player.NAME: "Odell Beckham Jr.",
-                str(Player.NAME)[::-1]: "Beckham Jr. Odell"
+                Player.NAME[::-1]: "Beckham Jr. Odell"
             },
             "nfl.p.30972": {
                 "First Name": "Saquon",
@@ -85,7 +85,7 @@ class TestPlayerLoader(unittest.TestCase):
                 Player.INJURY_STATUS: " ",
                 "Starting": "No",
                 Player.NAME: "Saquon Barkley",
-                str(Player.NAME)[::-1]: "Barkley Saquon"
+                Player.NAME[::-1]: "Barkley Saquon"
             },
             "nfl.p.6760": {
                 "First Name": "Eli",
@@ -100,7 +100,7 @@ class TestPlayerLoader(unittest.TestCase):
                 Player.INJURY_STATUS: " ",
                 "Starting": "No",
                 Player.NAME: "Eli Manning",
-                str(Player.NAME)[::-1]: "Manning Eli"
+                Player.NAME[::-1]: "Manning Eli"
             }
         }
         self.assertDictEqual(correct, player_loader.get_player_dict())
