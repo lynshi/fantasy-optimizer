@@ -22,6 +22,11 @@ class TestStatistics(unittest.TestCase):
             self.assertEqual(league, fetcher.league)
             self.assertEqual(d[league], fetcher._league)
 
+    def test_disallow_cross_season(self):
+        for league, fetcher in self.fetchers.items():
+            self.assertRaises(ValueError, fetcher.get_team_statistics,
+                              'CHI', 2018, 3, 5)
+
     def test_get_nba_team_statistics(self):
         team = 'CHI'
         season = 2018
