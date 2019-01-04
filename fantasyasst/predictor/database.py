@@ -42,7 +42,7 @@ class Statistics:
         if game - n_games_back < 1:
             raise ValueError('Cross season retrieval not yet implemented')
         query.add_filter(Statistics.RK, '<', game)
-        query.add_filter(Statistics.RK, '>=', game - n_games_back)
+        query.add_filter(Statistics.RK, '>=', game - n_games_back - 1)
         query.add_filter(Statistics.TM, '=', team)
 
         return list(query.fetch())
