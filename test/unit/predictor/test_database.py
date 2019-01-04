@@ -43,6 +43,8 @@ class TestStatistics(unittest.TestCase):
             self.assertLessEqual(game - n - 1, entity.key.id)
             self.assertEqual('NBA', entity.key.parent.kind)
             self.assertEqual(team, entity.key.parent.name)
+            self.assertEqual(entity.key.id, entity['Rk'])
+            self.assertEqual(team, entity['Tm'])
             needed_games.remove(entity.key.id)
 
         self.assertFalse(needed_games)
