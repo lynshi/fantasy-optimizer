@@ -34,9 +34,12 @@ class AbilityApproximator:
         """
         teams = LEAGUE_TEAMS[self.league]
 
-        matrix = [[0] * len(teams)] * len(teams)
-        for idx, team in enumerate(teams):
-
-            coeff = 2 ** (-idx)
-
-            matrix[idx][teams.index(opponent)] = coeff
+        matrix = [[0 for i in range(len(teams))] for j in range(len(teams))]
+        for team_idx, team in enumerate(teams):
+            entities = self.database.get_team_statistics(team, self.season,
+                                                         self.game,
+                                                         self.n_games_back)
+            for game_idx, entity in enumerate(entities):
+                coefficient = 2 ** (-game_idx)
+                opponent = entity['Opp']
+                matrix[team_idx][teams.index(opponent)] = coefficient
