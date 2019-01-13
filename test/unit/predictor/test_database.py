@@ -27,7 +27,7 @@ class TestStatistics(unittest.TestCase):
             self.assertRaises(ValueError, fetcher.get_team_statistics,
                               'CHI', 2018, 3, 5)
             self.assertRaises(ValueError, fetcher.get_player_statistics,
-                              'Jimmy Butler', 'CHI', 2018, 3, 5)
+                              'Jimmy Butler', 'MIN', 2018, 3, 5)
 
     def test_get_nba_team_statistics(self):
         team = 'CHI'
