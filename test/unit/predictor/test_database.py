@@ -52,6 +52,7 @@ class TestStatistics(unittest.TestCase):
             self.assertEqual(team, entity.key.parent.name)
             self.assertEqual(entity.key.id, entity['Rk'])
             self.assertEqual(team, entity['Tm'])
+            self.assertEqual(needed_games[0], entity.key.id)
             needed_games.remove(entity.key.id)
 
         self.assertFalse(needed_games)
@@ -83,6 +84,7 @@ class TestStatistics(unittest.TestCase):
             self.assertEqual(entity.key.id, entity['Rk'])
             self.assertEqual(team, entity['Tm'])
             self.assertEqual(name, entity['Name'])
+            self.assertEqual(needed_games[0], entity.key.id)
             needed_games.remove(entity.key.id)
 
         self.assertFalse(needed_games)

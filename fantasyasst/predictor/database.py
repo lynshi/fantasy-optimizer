@@ -10,6 +10,10 @@ class Statistics:
     TM = 'Tm'
     NAME = 'Name'
 
+    COUNTING_STATS = {
+        League.NBA: {'AST', 'BLK', 'PTS', 'STL', 'TOV', 'TRB'}
+    }
+
     def __init__(self, league):
         """
         Construct Statistics object, which provides an interface to a
