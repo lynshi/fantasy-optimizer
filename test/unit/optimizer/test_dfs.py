@@ -1,6 +1,7 @@
-from copy import deepcopy
-import pulp
 import unittest
+from copy import deepcopy
+
+import pulp
 
 from fantasyasst.optimizer.dfs import DfsOptimizer
 from fantasyasst.optimizer.exceptions import OptimizerException

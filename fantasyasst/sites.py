@@ -1,4 +1,5 @@
 from enum import Enum
+
 from fantasyasst.player import Player
 
 

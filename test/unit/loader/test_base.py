@@ -1,6 +1,7 @@
-import numpy as np
 import unittest
 from unittest.mock import mock_open, patch
+
+import numpy as np
 
 from fantasyasst.loader.base import PlayerLoader
 from fantasyasst.player import Player

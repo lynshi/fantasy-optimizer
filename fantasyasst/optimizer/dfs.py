@@ -1,8 +1,9 @@
 import json
+
 import pulp
 
-from fantasyasst.player import Player
 from fantasyasst.optimizer.exceptions import OptimizerException
+from fantasyasst.player import Player
 
 
 class DfsOptimizer:

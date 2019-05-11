@@ -8,5 +8,3 @@ script:
 - coverage run --source fantasyasst -m unittest discover --start-directory test
 after_success:
 - coveralls
-before_install:
-- openssl aes-256-cbc -K $encrypted_34b261939e9a_key -iv $encrypted_34b261939e9a_iv -in gcloud-datastore.json.enc -out gcloud-datastore.json -d

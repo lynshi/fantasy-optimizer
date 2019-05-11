@@ -110,5 +110,3 @@ data
 
 # for pulp files
 *.mps
-
-gcloud-datastore.json
