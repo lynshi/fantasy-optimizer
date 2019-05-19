@@ -3,9 +3,9 @@ from copy import deepcopy
 
 import pulp
 
-from fantasyasst.optimizer.dfs import DfsOptimizer
-from fantasyasst.optimizer.exceptions import OptimizerException
-from fantasyasst.player import Player
+from fantasyopt.optimizer.dfs import DfsOptimizer
+from fantasyopt.optimizer.exceptions import OptimizerException
+from fantasyopt.player import Player
 
 
 class TestDfsOptimizer(unittest.TestCase):

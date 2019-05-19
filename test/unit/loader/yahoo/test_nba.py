@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import mock_open, patch
 
-from fantasyasst.loader.yahoo.nba import NbaLoader
-from fantasyasst.player import Player
+from fantasyopt.loader.yahoo.nba import NbaLoader
+from fantasyopt.player import Player
 
 
 class TestNbaLoader(unittest.TestCase):

@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import mock_open, patch
 
-from fantasyasst import *
-from fantasyasst.loader.yahoo.nfl import NflLoader
+from fantasyopt import *
+from fantasyopt.loader.yahoo.nfl import NflLoader
 
 
 class TestNflLoader(unittest.TestCase):

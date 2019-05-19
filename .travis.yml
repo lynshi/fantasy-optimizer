@@ -6,6 +6,6 @@ install:
 - pip3 install coveralls
 - pip3 install -r requirements.txt
 script:
-- coverage run --source fantasyasst -m unittest discover --start-directory test
+- coverage run --source fantasyopt -m unittest discover --start-directory test
 after_success:
 - coveralls

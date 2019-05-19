@@ -1,8 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from fantasyasst import SITE_DEFAULTS, Player, Site
-from fantasyasst.loader.base import PlayerLoader
+from fantasyopt import SITE_DEFAULTS, Player, Site
+from fantasyopt.loader.base import PlayerLoader
 
 
 class NbaLoader(PlayerLoader):

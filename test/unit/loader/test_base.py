@@ -3,8 +3,8 @@ from unittest.mock import mock_open, patch
 
 import numpy as np
 
-from fantasyasst.loader.base import PlayerLoader
-from fantasyasst.player import Player
+from fantasyopt.loader.base import PlayerLoader
+from fantasyopt.player import Player
 
 
 class TestPlayerLoader(unittest.TestCase):

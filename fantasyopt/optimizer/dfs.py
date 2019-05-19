@@ -2,8 +2,8 @@ import json
 
 import pulp
 
-from fantasyasst.optimizer.exceptions import OptimizerException
-from fantasyasst.player import Player
+from fantasyopt.optimizer.exceptions import OptimizerException
+from fantasyopt.player import Player
 
 
 class DfsOptimizer:

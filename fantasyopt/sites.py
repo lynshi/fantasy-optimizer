@@ -1,6 +1,6 @@
 from enum import Enum
 
-from fantasyasst.player import Player
+from fantasyopt.player import Player
 
 
 class Site(Enum):

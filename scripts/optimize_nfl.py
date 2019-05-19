@@ -1,8 +1,8 @@
 import sys
 
-from fantasyasst import *
-import fantasyasst.loader.yahoo as yh
-from fantasyasst.optimizer.dfs import DfsOptimizer
+from fantasyopt import *
+import fantasyopt.loader.yahoo as yh
+from fantasyopt.optimizer.dfs import DfsOptimizer
 
 
 def optimize_lineup(site, csv_location):
